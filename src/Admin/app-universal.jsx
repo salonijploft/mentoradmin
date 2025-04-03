@@ -3,7 +3,7 @@ import "bootstrap/dist/css/bootstrap.css";
 import "bootstrap-daterangepicker/daterangepicker.css";
 import React, { useState, useContext, useMemo, useEffect } from "react";
 import config from "config";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes} from "react-router-dom";
 import Header from "./components/header/index";
 import Dashboard from "./components/dashboard";
 import Appointments from "./components/appointments";
@@ -198,12 +198,7 @@ const showHeader = useMemo(() => {
             <Route path="/admin/mentor-detail/:id" element={<MentorDetail />} />
 
             <Route path="/admin/mentee-sessions/:id"  element={<MenteeSession />}/>
-
-            <Route
-              path="/admin/mentor-tracks/:id"
-
-              element={<MentorTracks />}
-            />
+            <Route path="/admin/mentor-tracks/:id" element={<MentorTracks />} />
             <Route path="/admin/goal-list" element={<GoalList />} />
             <Route path="/admin/edit-goal/:id" element={<AddGoals />} />
             <Route path="/admin/add-goal" element={<AddGoals />} />
