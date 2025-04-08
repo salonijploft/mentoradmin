@@ -82,6 +82,11 @@ const AddCategory = () => {
         }
     };
 
+
+    const handleBack = () => {
+        navigate(-1); // this goes back to the previous page
+    };
+
     return (
         <>
             <SidebarNav />
@@ -137,9 +142,20 @@ const AddCategory = () => {
 
                                                     {/* Submit Button */}
                                                     <div className="m-t-20 text-center">
-                                                        <button type="submit" className="btn btn-primary btn-lg">
-                                                            {isEditMode ? "Update Category" : "Create Category"}
-                                                        </button>
+
+                                                        <div className="d-flex justify-content-between">
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-secondary"
+                                                                onClick={handleBack}
+                                                            >
+                                                                Back
+                                                            </button>
+
+                                                            <button type="submit" className="btn btn-primary btn-lg">
+                                                                {isEditMode ? "Update Category" : "Create Category"}
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </Form>
                                             )}

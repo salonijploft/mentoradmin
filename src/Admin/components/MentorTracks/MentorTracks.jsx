@@ -1,70 +1,35 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import SidebarNav from "../sidebar";
 import Pagination from "../Pagination/Pagination";
 import PaymentDetails from "../CustomModals/PaymentDetails";
 import { Tab, Tabs } from "react-bootstrap";
 import ShowSessionList from "../CustomModals/ShowSessionList";
+import { API_BASE_URL } from "../../../Helper/apicall";
 
 require("../../../client/assets/css/custom.css");
 
 const MentorTracks = () => {
     const [key, setKey] = useState("completed");
     const [showPayment, setShowPaymentPopup] = useState(false);
+    const [sessionTracks, setSessionTracks] = useState([]);
 
-    const sessionTracks = [
-        {
-            sessionTrackName: "Frontend Development",
-            mentorshipTrackTime: "3 Months (6 sessions)",
-            trackPrice: "₦50,000",
-            sessionDuration: "30 Mins",
-            createdAt: "2025-03-07",
-            sessions: [
-                { sessionTitle: "Introduction to HTML & CSS", description: "Basics of HTML structure, CSS styling, and responsive design." },
-                { sessionTitle: "JavaScript Fundamentals", description: "Understanding JavaScript variables, functions, and loops." },
-                { sessionTitle: "DOM Manipulation & Events", description: "Interacting with the DOM and handling user events." },
-                { sessionTitle: "React Basics", description: "Introduction to React components, state, and props." },
-                { sessionTitle: "API Integration & Fetching Data", description: "Working with REST APIs and handling data in a frontend application." },
-                { sessionTitle: "Project Building & Deployment", description: "Building a real-world project and deploying it online." }
-            ],
-            trackOutcome: "By the end of this track, participants will have a strong foundation in frontend development, be able to build dynamic websites using React, and deploy applications to production."
-        },
-        {
-            sessionTrackName: "Backend Development",
-            mentorshipTrackTime: "3 Months (6 sessions)",
-            trackPrice: "₦60,000",
-            sessionDuration: "30 Mins",
-            createdAt: "2025-03-07",
-            sessions: [
-                { sessionTitle: "Introduction to HTML & CSS", description: "Basics of HTML structure, CSS styling, and responsive design." },
-                { sessionTitle: "JavaScript Fundamentals", description: "Understanding JavaScript variables, functions, and loops." },
-                { sessionTitle: "DOM Manipulation & Events", description: "Interacting with the DOM and handling user events." },
-                { sessionTitle: "React Basics", description: "Introduction to React components, state, and props." },
-                { sessionTitle: "API Integration & Fetching Data", description: "Working with REST APIs and handling data in a frontend application." },
-                { sessionTitle: "Project Building & Deployment", description: "Building a real-world project and deploying it online." }
-            ],
-            trackOutcome: "By the end of this track, participants will have a strong foundation in frontend development, be able to build dynamic websites using React, and deploy applications to production."
-        },
-        {
-            sessionTrackName: "Data Science Basics",
-            mentorshipTrackTime: "6 Months (12 sessions)",
-            trackPrice: "₦75,000",
-            sessionDuration: "30 Mins",
-            createdAt: "2025-03-07",
-            sessions: [
-                { sessionTitle: "Introduction to HTML & CSS", description: "Basics of HTML structure, CSS styling, and responsive design." },
-                { sessionTitle: "JavaScript Fundamentals", description: "Understanding JavaScript variables, functions, and loops." },
-                { sessionTitle: "DOM Manipulation & Events", description: "Interacting with the DOM and handling user events." },
-                { sessionTitle: "React Basics", description: "Introduction to React components, state, and props." },
-                { sessionTitle: "API Integration & Fetching Data", description: "Working with REST APIs and handling data in a frontend application." },
-                { sessionTitle: "Project Building & Deployment", description: "Building a real-world project and deploying it online." }
-            ],
-            trackOutcome: "By the end of this track, participants will have a strong foundation in frontend development, be able to build dynamic websites using React, and deploy applications to production."
-        }
-    ];
-
-
-
-
+    useEffect(() => {
+        const fetchSessionTracks = async () => {
+            try {
+                const token = localStorage.getItem('token')
+                const response = await axios.get(`${API_BASE_URL}/api/admin/mentorTrackLists/4`, {
+                        headers: { Authorization: `Bearer ${token}` },        
+                });
+                if (response.data && response.data.data) {
+                    setSessionTracks(response.data.data);
+                }
+            } catch (error) {
+                console.error("Error fetching session tracks:", error);
+            }
+        };
+        fetchSessionTracks();
+    }, []);
 
     return (
         <>
@@ -76,47 +41,34 @@ const MentorTracks = () => {
                         <div className="row">
                             <div className="col-sm-12">
                                 <h3 className="page-title">Mentorship Track List</h3>
-
                             </div>
                         </div>
                     </div>
                     {/* /Page Header */}
                     <div className="row">
-
                         <div className="col-sm-12">
                             <div className="card">
                                 <div className="card-body">
                                     <div className="table-responsive custom-table">
-                                        <table className="table ">
-                                            <thead className="">
+                                        <table className="table">
+                                            <thead>
                                                 <tr>
-
                                                     <th>Session Track Name</th>
                                                     <th>Mentorship Track Duration</th>
                                                     <th>Track Price</th>
-                                                    <th>Mentorship Track Time</th>
                                                     <th>Created At</th>
                                                     <th>Action</th>
-
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {sessionTracks.map((session, index) => (
                                                     <tr key={index}>
-                                                        <td>{session.sessionTrackName}</td>
-                                                        <td>{session.mentorshipTrackTime}</td>
-                                                        <td className="amounts cursor-pointer">{session.trackPrice}</td>
-                                                        <td>{session.sessionDuration}</td>
-                                                        <td >
-                                                            {session.createdAt}
-                                                        </td>
-
+                                                        <td>{session.trackName || "N/A"}</td>
+                                                        <td>{session.trackDuration || "N/A"}</td>
+                                                        <td className="amounts cursor-pointer">{session.trackPrice || "N/A"}</td>
+                                                        <td>{session.createdAt}</td>
                                                         <td>
-
-                                                            <button className="btn btn-primary" onClick={() => {
-                                                                setShowPaymentPopup(true);
-                                                            }} >View</button>
-
+                                                            <button className="btn btn-primary" onClick={() => setShowPaymentPopup(true)}>View</button>
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -124,13 +76,7 @@ const MentorTracks = () => {
                                         </table>
                                     </div>
                                     <div className="d-flex justify-content-end mt-3">
-
-
-                                        <Pagination
-                                            current={1}
-                                            total={5}
-                                            pagination={() => { }}
-                                        />
+                                        <Pagination current={1} total={5} pagination={() => { }} />
                                     </div>
                                 </div>
                             </div>
@@ -139,9 +85,7 @@ const MentorTracks = () => {
                 </div>
                 <ShowSessionList
                     show={showPayment}
-                    handleClose={() => {
-                        setShowPaymentPopup(false);
-                    }}
+                    handleClose={() => setShowPaymentPopup(false)}
                     data={sessionTracks[0]?.sessions}
                 />
             </div>

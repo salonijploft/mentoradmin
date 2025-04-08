@@ -10,7 +10,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Swal from "sweetalert2";
 import { Spinner } from "react-bootstrap"; // Import Spinner
 
-const GoalList = () => {
+const GoalList = () => { 
     const [goals, setGoals] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPage, setTotalPages] = useState(1);

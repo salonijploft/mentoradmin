@@ -7,11 +7,16 @@ import { API_BASE_URL } from "../../../Helper/apicall";
 import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Loader from "../../components/Loader.js";
 
 const ForgotPassword = () => {
 
-  const handleSubmit = async (values, { setSubmitting }) => {
+      const [loading, setLoading] = useState(false);
+      const navigate = useNavigate();
+
+  const handleSubmit = async (values, { setSubmitting,resetForm  }) => {
     try {
+      setLoading(true)
       const token = localStorage.getItem("token");
       const response = await axios.post(
         `${API_BASE_URL}/api/admin/forgotPassword`,
@@ -19,13 +24,17 @@ const ForgotPassword = () => {
       
       ); 
       if (response.status === 200) {
+        navigate("/admin/login")
+        setLoading(false)
+        resetForm();
         const resetToken = response.data.data.resetPasswordToken;
         localStorage.setItem("resetPasswordToken", resetToken);
-        toast.success(response.data.message || "Password reset email sent successfully!", {
+        toast.success(response.data.data.message || "Password reset email sent successfully!", {
           position: "top-right",
         });
       }
     } catch (error) {
+      setLoading(false)
       if (error.response) {
         toast.error(error.response.data.message || "Something went wrong!", { position: "top-right" });
       } else {
@@ -33,13 +42,15 @@ const ForgotPassword = () => {
       }
       console.error("API Error:", error);
     } finally {
+      setLoading(false)
       setSubmitting(false);
     }
   };
   
-
   return (
     <>
+    {loading && <Loader />}
+
       <div className="login-container">
       <div className="login-box">
         <div className="logo login-new">

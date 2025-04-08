@@ -29,15 +29,14 @@ const Dashboard = () => {
   //         "UserType": item?.userType,
   //         "Date":item?.Date     // Lastly "Cancel Reason"
   //       }));
-
   //       setExcelData(customHeadings);
-
   //     } catch (error) {
   //       toast.error("Failed to fetch categories. Please try again later");
   //     }
   //   };
   //   fetchCategory();
   // }, []);
+
   useEffect(() => {
     // Debug log to confirm the effect is running
     console.log("Dashboard component mounted, attempting to fetch early access data");
@@ -298,9 +297,7 @@ const Dashboard = () => {
                       </div>
 
                     </div>
-
                   </Link>
-
                 </div>
 
 

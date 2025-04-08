@@ -167,6 +167,9 @@ const AddBlog = () => {
       setLoading(false);
     }
   };
+  const handleBack = () => {
+    navigate(-1); // this goes back to the previous page
+};
 
   return (
     <>
@@ -245,15 +248,9 @@ const AddBlog = () => {
                           <label>Blog Category *</label>
                           <Field as="select" className="form-control" name="blogCategory">
                             <option value="">Select Category</option>
-                            {category.length > 0 ? (
-                              category.map((cat) => (
-                                <option key={cat.id} value={cat.id}>
-                                  {cat.categoryName}
-                                </option>
-                              ))
-                            ) : (
-                              <option disabled>Loading categories...</option>
-                            )}
+                            <option value="General">General</option>
+                            <option value="Mentor">Mentor</option>
+                            <option value="Mentee">Mentee</option>
                           </Field>
                           {touched.blogCategory && errors.blogCategory && (
                             <div className="text-danger">{errors.blogCategory}</div>
@@ -308,9 +305,19 @@ const AddBlog = () => {
                             <label className="form-check-label">Publish</label>
                           </div>
                           <ErrorMessage name="blogStatus" component="div" className="text-danger" />
+                          <div className="d-flex justify-content-between">
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-secondary"
+                                                            onClick={handleBack}
+                                                        >
+                                                            Back
+                                                        </button>
                           <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
                             {loading ? <Spinner animation="border" size="sm" /> : isEditMode ? "Update Blog" : "Create Blog"}
                           </button>
+                          </div>
+
                         </div>
                       </Form>
                     )}

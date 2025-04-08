@@ -3,41 +3,30 @@ import SidebarNav from "../sidebar";
 import Pagination from "../Pagination/Pagination";
 import PaymentDetails from "../CustomModals/PaymentDetails";
 import { Tab, Tabs } from "react-bootstrap";
+import axios from "axios";
+import { API_BASE_URL } from "../../../Helper/apicall";
 require("../../../client/assets/css/custom.css");
 
 const MentorSession = () => {
     const [key, setKey] = useState("completed");
     const [showPayment, setShowPaymentPopup] = useState(false);
+    const [sessionData, setSessionData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    const sessionData = [
-        {
-            MentorName: "John Doe",
-            SessionTrack: "React Development",
-            TimeSlot: "Asian/Pacific",
-            BookingTime: "2024-03-01 09:30 AM",
-            sessionTime: "2024-03-04 09:30 AM - 10:30 AM",
-            sessionTaken: 2,
-            sessionRemaing: 4,
-            SessionAmount: "₦ 15,000"
-        },
-        {
-            MentorName: "Jane Smith",
-            SessionTrack: "Node.js Backend",
-            TimeSlot: "Asian/Pacific",
-            BookingTime: "2024-03-01 09:30 AM",
-            sessionTime: "2024-03-04 09:30 AM - 10:30 AM",
-            SessionAmount: "₦ 18,000"
-        },
-        {
-            MentorName: "Michael Brown",
-            SessionTrack: "UI/UX Design",
-            TimeSlot: "Asian/Pacific",
-            BookingTime: "2024-03-01 09:30 AM",
-            sessionTime: "2024-03-04 09:30 AM - 10:30 AM",
-            SessionAmount: "₦ 12,500"
+    useEffect(() => {
+    const fetchsessions = async () => {
+        try {
+            const response = await axios.get(`${API_BASE_URL}/api/admin/menteeSessionLists/${id}`)
+            setSessionData(response.data.data);
+        } catch(error) {
+            setError("Failed to fetch session data");
+        } finally {
+            setLoading(false);
         }
-    ];
-
+    };
+    fetchsessions();
+  },[])
 
     return (
         <>
@@ -49,7 +38,6 @@ const MentorSession = () => {
                         <div className="row">
                             <div className="col-sm-12">
                                 <h3 className="page-title">Session Lists</h3>
-
                             </div>
                         </div>
                     </div>
@@ -72,13 +60,8 @@ const MentorSession = () => {
                         </div> */}
 
 
-
-
-
                         <div className="col-sm-12">
-
                             <Tabs id="booking-tabs" activeKey={key} onSelect={(k) => setKey(k)} className="mb-1  custom-tabs">
-
                                 <Tab eventKey="upcoming" title="Upcoming Sessions">
                                 </Tab>
 
@@ -130,8 +113,6 @@ const MentorSession = () => {
                                         </table>
                                     </div>
                                     <div className="d-flex justify-content-end mt-3">
-
-
                                         <Pagination
                                             current={1}
                                             total={5}

@@ -10,13 +10,13 @@ import "react-toastify/dist/ReactToastify.css";
 import Swal from "sweetalert2";
 
 const CategoryList = () => {
-   const [categories, setCategories] = useState([]);
-   const [curruentPage, setCurrentPage] = useState(1);
-   const [totalPage, setTotalPages] = useState(1);
-   const [limit, setLimit] = useState(10);
-   const [page, setPage] = useState(1);
-   const navigate = useNavigate();
-   const token = localStorage.getItem("token");
+    const [categories, setCategories] = useState([]);
+    const [curruentPage, setCurrentPage] = useState(1);
+    const [totalPage, setTotalPages] = useState(1);
+    const [limit, setLimit] = useState(10);
+    const [page, setPage] = useState(1);
+    const navigate = useNavigate();
+    const token = localStorage.getItem("token");
 
     const fetchData = async () => {
         const token = localStorage.getItem("token");
@@ -33,9 +33,9 @@ const CategoryList = () => {
                 },
             });
             console.log("Response Data:", response.data.pagination.currentPage); // Debugging
-     
+
             if (response.data.status === 200) {
-                setCategories(response.data.data ); // Ensure categories is an array
+                setCategories(response.data.data); // Ensure categories is an array
                 setCurrentPage(response.data.pagination.currentPage);
                 setTotalPages(response.data.pagination.totalPages);
                 console.log("Data fetched successfully:", response.data.data);
@@ -63,33 +63,41 @@ const CategoryList = () => {
     // Function to handle category deletion
     const handleDelete = async (id) => {
         const result = await Swal.fire({
-              title: 'Are you sure?',
-              text: "You won't be able to revert this!",
-              icon: 'warning',
-              showCancelButton: true,
-              confirmButtonColor: '#3085d6',
-              cancelButtonColor: '#d33',
-              confirmButtonText: 'Yes, delete it!'
-            });
-        console.log("handleDelete called with categoryId:", id);
-        if (!id) {
-            console.error("Invalid category ID");
-            return;
-        }
-        try {
-            const response = await axios.get(`${API_BASE_URL}/api/admin/deleteMenteeCategory/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            console.log("Delete API response:", response);
-            if (response.data.status === 200) {
-                setCategories(categories.filter(category => category.id !== id));
-                toast.success("Category deleted successfully!", { position: "top-right" });
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        });
+    
+        // ✅ ONLY proceed if user confirmed
+        if (result.isConfirmed) {
+            if (!id) {
+                console.error("Invalid category ID");
+                return;
             }
-        } catch (error) {
-            console.error("Error deleting category:", error);
-            toast.error("Failed to delete category.", { position: "top-right" });
+    
+            try {
+                const response = await axios.get(`${API_BASE_URL}/api/admin/deleteMenteeCategory/${id}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                console.log("Delete API response:", response);
+                if (response.data.status === 200) {
+                    setCategories(categories.filter(category => category.id !== id));
+                    toast.success("Category deleted successfully!", { position: "top-right" });
+                }
+            } catch (error) {
+                console.error("Error deleting category:", error);
+                toast.error("Failed to delete category.", { position: "top-right" });
+            }
+        } else {
+            console.log("Deletion cancelled by user.");
         }
     };
+    
+
     return (
         <>
             <SidebarNav />

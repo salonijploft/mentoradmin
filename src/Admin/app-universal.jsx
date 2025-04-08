@@ -104,7 +104,6 @@ const showHeader = useMemo(() => {
             />
         } */}
        {showHeader && <Header onMenuClick={toggleMobileMenu} />}
-
         <Routes>
           <Route path="/admin/register" element={<Register />} />
           <Route path="/admin/forgotPassword" element={<ForgotPassword />} />
@@ -161,7 +160,7 @@ const showHeader = useMemo(() => {
             <Route path="/admin/edit-blog/:id" element={<AddBlog />} />
             <Route path="/admin/pending-blog" element={<PendingBlog />} />
             <Route path="/admin/profile" element={<Profile />} />
-
+            
             <Route path="/admin/payout-requests" element={<PayoutRequests />} />
             <Route path="/admin/mentee-list" element={<Mentee />} />
             <Route path="/admin/deleted-mentees" element={<Mentee />} />
@@ -206,7 +205,6 @@ const showHeader = useMemo(() => {
             <Route path="/admin/edit-category/:id" element={<AddCategory />} />
             <Route path="/admin/add-category" element={<AddCategory />} />
          </Route>
-         
             <Route path="/*" element={<Navigate to="/admin/login" replace />} />
 
         </Routes>

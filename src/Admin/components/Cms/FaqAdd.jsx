@@ -87,7 +87,7 @@ const Faq = () => {
     useEffect(() => {
         const fetchCategory = async () => {
             try {
-                const response = await axios.get(`${API_BASE_URL}/api/admin/getMenteeCategories`, 
+                const response = await axios.get(`${API_BASE_URL}/api/admin/getMenteeCategories`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`, // Include token in headers
@@ -145,7 +145,7 @@ const Faq = () => {
             };
             console.log("Updating FAQ with payload:", payload);
             const response = await axios.post(`${API_BASE_URL}/api/admin/updateFaq/${id}`, payload, {
-                 headers: {
+                headers: {
                     Authorization: `Bearer ${token}`, // Include token in headers
                     "Content-Type": "application/json"
                 }
@@ -165,13 +165,18 @@ const Faq = () => {
             setSubmitting(false);
         }
     };
- 
+
     // Handle Delete Image
     const handleDelete = (setFieldValue) => {
         setFieldValue("blogImage", '');
         setPreview(null);
         document.getElementById("file-upload").value = "";
     };
+
+    const handleBack = () => {
+        navigate(-1); // this goes back to the previous page
+    };
+
 
     return (
         <>
@@ -242,7 +247,14 @@ const Faq = () => {
                                         className="text-danger"
                                     />
                                 </div>
-
+                                <div className="d-flex justify-content-between">
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={handleBack}
+                                >
+                                    Back
+                                </button>
                                 <button
                                     type="submit"
                                     className="btn btn-primary"
@@ -250,6 +262,7 @@ const Faq = () => {
                                 >
                                     {isSubmitting ? (isEditMode ? "Updating..." : "Saving...") : isEditMode ? "Update FAQ" : "Save FAQ"}
                                 </button>
+                                </div>
                             </Form>
                         )}
                     </Formik>

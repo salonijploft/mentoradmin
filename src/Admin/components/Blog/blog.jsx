@@ -62,11 +62,7 @@ const Blogs = () => {
     fetchBlogList();
   }, [page, isDelete]);
 
-  const getCategoryName = (categoryId) => {
-    const category = categories.find((cat) => cat.id === categoryId);
-    return category ? category.categoryName : "Unknown";
-  };
-
+  
   const deleteBlogHandler = async (id) => {
     const result = await Swal.fire({
       title: 'Are you sure?',
@@ -134,9 +130,9 @@ const Blogs = () => {
                         <tbody>
                         {blog.length > 0  ?(
                           blog.map((item) => (
-                            <tr key={item.id}>
+                            <tr key={item.id} >
                               <td>{item.name}</td>
-                              <td>{getCategoryName(Number(item.category))}</td>
+                              <td>{item.category}</td>
                               <td>{new Intl.DateTimeFormat('en-GB', {
                                 day: '2-digit',
                                 month: 'short',

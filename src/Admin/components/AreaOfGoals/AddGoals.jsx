@@ -16,7 +16,7 @@ const AddGoals = () => {
     const navigate = useNavigate();
     const token = localStorage.getItem("token");
     const [goalData, setGoalsData] = useState({
-        status: "",
+        status: "Active",
     });
     const [goalTitle, setGoalTitle] = useState('');
     const [loading, setLoading] = useState(false); // New loading state
@@ -84,6 +84,10 @@ const AddGoals = () => {
         }
     }
 
+    const handleBack = () => {
+        navigate(-1); // this goes back to the previous page
+    };
+
     return (
         <>
             <SidebarNav />
@@ -134,9 +138,18 @@ const AddGoals = () => {
                                                 </div>
                                                 {/* Submit Button */}
                                                 <div className="m-t-20 text-center">
-                                                    <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
-                                                        {loading ? <Spinner animation="border" size="sm" /> : (isEditMode ? "Update Goal" : "Create Goal")}
-                                                    </button>
+                                                    <div className="d-flex justify-content-between">
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-secondary"
+                                                            onClick={handleBack}
+                                                        >
+                                                            Back
+                                                        </button>
+                                                        <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
+                                                            {loading ? <Spinner animation="border" size="sm" /> : (isEditMode ? "Update Goal" : "Create Goal")}
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </Form>
                                         )}

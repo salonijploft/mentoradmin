@@ -30,7 +30,6 @@ const Subadminlist = () => {
             const response = await axios.get(`${API_BASE_URL}/api/admin/getStaff`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-
             console.log("API Response:", response.data); // Debugging
 
             // Ensure the response is an array
@@ -72,7 +71,6 @@ const Subadminlist = () => {
                         Authorization: `Bearer ${token}`,
                     },
                 });
-
                 if (response.status === 200) {
                     toast.success("Admin Staff and associated Role Permissions deleted successfully!", { position: "top-right" });
                     // Fetch updated list after deletion
@@ -90,6 +88,7 @@ const Subadminlist = () => {
         setShowPermision(true);
     };
 
+    
     return (
         <>
             <SidebarNav />
@@ -190,7 +189,6 @@ const Subadminlist = () => {
                 </div>
             </div>
             <ShowPermissions show={showPermision} handleClose={() => setShowPermision(false)} permissions={selectedPermissions} />
-
         </>
     );
 };

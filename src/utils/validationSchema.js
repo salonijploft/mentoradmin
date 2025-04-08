@@ -49,6 +49,7 @@ export const subadmin = Yup.object().shape({
   lastName: Yup.string().required("Last Name is required"),
   email: Yup.string().email("Invalid email").required("Email is required"),
   password: Yup.string().required("Password is required"),
+  // image: Yup.string().required("Image is required")
 });
 
 // export const BlogSchma = Yup.object({
@@ -70,12 +71,15 @@ export const BlogSchma = Yup.object({
 });
 
 export const LoginSchema = Yup.object().shape({
-  email: Yup.string().email("Invalid email").required("Email is required"),
+  email: Yup.string().email('Invalid email').required('Email is required'),
   password: Yup.string()
-    .min(6, "Password must be at least 6 characters")
-    .required("Password is required"),
+    .min(8, 'Password must be at least 8 characters')
+    .matches(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .matches(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .matches(/[0-9]/, 'Password must contain at least one number')
+    .matches(/[@$!%*?&]/, 'Password must contain at least one special character')
+    .required('Password is required'),
 });
-
 
  export const forgotpassword = Yup.object().shape({
     email: Yup.string()
