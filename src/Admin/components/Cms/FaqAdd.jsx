@@ -29,6 +29,23 @@ const Faq = () => {
         category: ""
     };
 
+    //   // Fetch categories for the faq's
+  useEffect(() => {
+    const fetchCategory = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/admin/getMenteeCategories`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (response.data.status === 200) {
+          setCategory(response.data.data);
+        }
+      } catch (error) {
+        toast.error("Failed to fetch categories. Please try again later");
+      }
+    };
+    fetchCategory();
+  }, [token]); 
+
     // Fetch FAQ details when in edit mode
     useEffect(() => {
         if (isEditMode) {
@@ -177,7 +194,6 @@ const Faq = () => {
         navigate(-1); // this goes back to the previous page
     };
 
-
     return (
         <>
             <SidebarNav />
@@ -212,7 +228,7 @@ const Faq = () => {
                                         className="text-danger"
                                     />
                                 </div>
-                                <div className="mb-3">
+                                {/* <div className="mb-3">
                                     <label className="form-label">Category *</label>
                                     <Field as="select" name="category" className="form-select">
                                         <option value="">Select category</option>
@@ -231,6 +247,16 @@ const Faq = () => {
                                         component="div"
                                         className="text-danger"
                                     />
+                                </div> */}
+                                <div className="mb-3">
+                                    <label> Category *</label>
+                                    <Field as="select" className="form-control" name="blogCategory">
+                                        <option value="">Select Category</option>
+                                        <option value="General">General</option>
+                                        <option value="Mentor">Mentor</option>
+                                        <option value="Mentee">Mentee</option>
+                                    </Field>
+                                    <ErrorMessage name="category" component="div" className="text-danger"/>
                                 </div>
                                 <div className="mb-3">
                                     <label className="form-label">Answer</label>
@@ -248,20 +274,20 @@ const Faq = () => {
                                     />
                                 </div>
                                 <div className="d-flex justify-content-between">
-                                <button
-                                    type="button"
-                                    className="btn btn-secondary"
-                                    onClick={handleBack}
-                                >
-                                    Back
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="btn btn-primary"
-                                    disabled={isSubmitting}
-                                >
-                                    {isSubmitting ? (isEditMode ? "Updating..." : "Saving...") : isEditMode ? "Update FAQ" : "Save FAQ"}
-                                </button>
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary"
+                                        onClick={handleBack}
+                                    >
+                                        Back
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="btn btn-primary"
+                                        disabled={isSubmitting}
+                                    >
+                                        {isSubmitting ? (isEditMode ? "Updating..." : "Saving...") : isEditMode ? "Update FAQ" : "Save FAQ"}
+                                    </button>
                                 </div>
                             </Form>
                         )}
