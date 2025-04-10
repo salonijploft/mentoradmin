@@ -101,11 +101,6 @@ const Wallet = () => {
                             </div>
                         </div>
 
-
-
-
-
-
                         <div className="col-sm-12">
 
                             <Tabs id="booking-tabs" activeKey={key} onSelect={(k) => setKey(k)} className="mb-1  custom-tabs">

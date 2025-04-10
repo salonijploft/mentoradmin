@@ -643,7 +643,7 @@ const Mentor = () => {
     try {
       const response = await axios.post(
         `${API_BASE_URL}/api/admin/verifyStatusUpdate`,
-        { verifyStatus: verifyStatusss, id: selectedMentor, rejectedReason: rejectionReason },
+        { verifyStatus: verifyStatuss, id: selectedMentor, rejectedReason: rejectionReason },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -795,9 +795,9 @@ const Mentor = () => {
                                 </div>
                               </td>
                               <td>
-                                <Link>
+                              <Link to={`/admin/mentor-tracks/${mentor.id}`}>
                                   <button className="btn btn-primary">View</button>
-                                </Link>
+                                </Link> 
                               </td>
                               {(mentor.verifyStatus === 0) ? (
                                 <td>
@@ -861,7 +861,7 @@ const Mentor = () => {
                           value={rejectionReason}
                           onChange={(e) => setRejectionReason(e.target.value)}
                         />
- </Modal.Body>
+                      </Modal.Body>
                       <Modal.Footer>
                         <Button variant="secondary" onClick={() => setShowModal(false)}>
                           Cancel

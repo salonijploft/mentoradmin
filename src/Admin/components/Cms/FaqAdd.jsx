@@ -70,7 +70,7 @@ const Faq = () => {
         }
     }, [isEditMode, id]);
 
-    const handleSubmit = async (values, { setSubmitting, resetForm }) => {
+ const handleSubmit = async (values, { setSubmitting, resetForm }) => {
         try {
             const payload = {
                 question: values.question,
@@ -151,7 +151,7 @@ const Faq = () => {
 
     ///update faq
     // Update FAQ
-    const handleUpdate = async (values, { setSubmitting, resetForm }) => {
+ const handleUpdate = async (values, { setSubmitting, resetForm }) => {
         console.log("handleUpdate called with values:", values);
         try {
             const token = localStorage.getItem("token");
@@ -278,8 +278,7 @@ const Faq = () => {
                                         type="button"
                                         className="btn btn-secondary"
                                         onClick={handleBack}
-                                    >
-                                        Back
+                                    >  Back
                                     </button>
                                     <button
                                         type="submit"

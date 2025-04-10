@@ -67,7 +67,7 @@ const CreateSubadmin = () => {
                     password: "",
                     profile_image: null,
                     permissions,
-                    status: staffData.status 
+                    status: staffData.status
                 });
                 if (staffData.profileImage) {
                     setImagePreview(`${API_BASE_URL}/${staffData.profileImage}`);
@@ -127,7 +127,6 @@ const CreateSubadmin = () => {
                 dataToSend.append(`rolePermission[${index}][isUpdate]`, permission.isUpdate);
                 dataToSend.append(`rolePermission[${index}][isDelete]`, permission.isDelete);
             });
-
             const url = isEditMode
                 ? `${API_BASE_URL}/api/admin/updateStaff/${staffId}`
                 : `${API_BASE_URL}/api/admin/createStaff`;
@@ -180,10 +179,9 @@ const CreateSubadmin = () => {
                                             handleSubmit(values);
                                         }}
                                     >
-
                                         {({ values, setFieldValue, handleChange }) => (
                                             <Form>
-                                                <div className="col-md-12 text-right">
+                                                {/* <div className="col-md-12 text-right">
                                                     <div className="col-md-6 text-right">
                                                         <div className="profile-containers" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginBottom: '20px' }}>
                                                             <img
@@ -205,8 +203,30 @@ const CreateSubadmin = () => {
                                                             />
                                                         </div>
                                                     </div>
+                                                </div> */}
+                                                <div className="col-md-12 text-right">
+                                                    <div className="col-md-12" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
+                                                        <div className="profile-containers" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '20px' }}>
+                                                            <img
+                                                                src={imagePreview || '/assets/img/dummy.png'}
+                                                                alt="Profile"
+                                                                className="profile-images"
+                                                                style={{ width: '150px', height: '150px', borderRadius: '50%', margin: '0 auto' }} // Center by auto margin
+                                                            />
+                                                            <label htmlFor="profile_image" className="edit-icons" style={{ cursor: 'pointer', marginTop: '10px' }}>
+                                                                <FaEdit />
+                                                            </label>
+                                                            <input
+                                                                type="file"
+                                                                id="profile_image"
+                                                                name="profile_image"
+                                                                accept="image/*"
+                                                                onChange={(e) => handleImageChange(e, setFieldValue)}
+                                                                style={{ display: "none" }}
+                                                            />
+                                                        </div>
+                                                    </div>
                                                 </div>
-
                                                 <div className="row">
                                                     <div className="col-md-6">
                                                         <label>First Name</label>
@@ -240,7 +260,6 @@ const CreateSubadmin = () => {
                                                         </div>
                                                     )}
                                                 </div>
-
                                                 <div className="form-group mt-3">
                                                     <label>Roles & Permissions</label>
                                                     <table className="table table-bordered">

@@ -18,7 +18,7 @@ const MentorTracks = () => {
         const fetchSessionTracks = async () => {
             try {
                 const token = localStorage.getItem('token')
-                const response = await axios.get(`${API_BASE_URL}/api/admin/mentorTrackLists/4`, {
+                const response = await axios.get(`${API_BASE_URL}/api/admin/mentorTrackLists/${id}`, {
                         headers: { Authorization: `Bearer ${token}` },        
                 });
                 if (response.data && response.data.data) {

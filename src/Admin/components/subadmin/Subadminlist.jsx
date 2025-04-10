@@ -91,21 +91,20 @@
 //     const handleToggleStatus = async (id, currentStatus) => {
 //         const token = localStorage.getItem("token");
 //         const updatedStatus = currentStatus === 1 ? 0 : 1;
-      
+
 //         try {
 //           const response = await axios.post(
 //             `${API_BASE_URL}/api/admin/updateStaffStatus`,
 //             { id, status: updatedStatus },
 //             { headers: { Authorization: `Bearer ${token}` } }
 //           );
-      
+
 //           // Update the local state after success
 //           setSubadmin((prev) =>
 //             prev.map((staff) =>
 //               staff.id === id ? { ...staff, status: updatedStatus } : staff
 //             )
 //           );
-      
 //           toast.success("Status updated successfully!", {
 //             position: "top-right",
 //           });
@@ -114,8 +113,6 @@
 //           toast.error("Error updating status", { position: "top-right" });
 //         }
 //       };
-      
-
 //     return (
 //         <>
 //             <SidebarNav />
@@ -279,7 +276,6 @@ const Subadminlist = () => {
             setLoading(false);
         }
     };
-
     const deleteBlogHandler = async (id) => {
         const result = await Swal.fire({
             title: "Are you sure?",
@@ -317,24 +313,30 @@ const Subadminlist = () => {
 
     const handleToggleStatus = async (id, currentStatus) => {
         const token = localStorage.getItem("token");
+        // Toggle between 1 (active) and 0 (inactive)
         const updatedStatus = currentStatus === 1 ? 0 : 1;
 
         try {
             const response = await axios.post(
-                `${API_BASE_URL}/api/admin/updateStaffStatus`,
-                { id, status: updatedStatus },
+                `${API_BASE_URL}/api/admin/staffStatusUpdate/${id}`,
+                { id, status: updatedStatus }, // Body structure based on API requirements
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
-            setSubadmin((prev) =>
-                prev.map((staff) =>
-                    staff.id === id ? { ...staff, status: updatedStatus } : staff
-                )
-            );
-
-            toast.success("Status updated successfully!", {
-                position: "top-right",
-            });
+            // Check if the response status is 200 (success)
+            if (response.status === 200) {
+                // Update local state
+                setSubadmin((prev) =>
+                    prev.map((staff) =>
+                        staff.id === id ? { ...staff, status: updatedStatus } : staff
+                    )
+                );
+                toast.success("Status updated successfully!", {
+                    position: "top-right",
+                });
+            } else {
+                toast.error("Failed to update status", { position: "top-right" });
+            }
         } catch (error) {
             console.error("Failed to update status:", error);
             toast.error("Error updating status", { position: "top-right" });
@@ -363,9 +365,7 @@ const Subadminlist = () => {
                             <div className="card">
                                 <div className="card-body">
                                     {loading ? (
-                                        <div className="d-flex justify-content-center">
-                                            <Spinner animation="border" />
-                                        </div>
+                                        <div className="d-flex justify-content-center">  <Spinner animation="border" /></div>
                                     ) : (
                                         <div className="table-responsive custom-table">
                                             <table className="table">
@@ -403,7 +403,7 @@ const Subadminlist = () => {
                                                                 </td>
                                                                 <td>{new Date(staff.otpExpiresAt).toLocaleDateString()}</td>
                                                                 <td>
-                                                                    <div className="status-toggle">
+                                                                    {/* <div className="status-toggle">
                                                                         <input
                                                                             id={`status${staff.id}`}
                                                                             className="check"
@@ -411,10 +411,20 @@ const Subadminlist = () => {
                                                                             checked={staff.status === 1}
                                                                             onChange={() => handleToggleStatus(staff.id, staff.status)}
                                                                         />
-                                                                        <label htmlFor={`status${staff.id}`} className="checktoggle checkbox-bg">
-                                                                            checkbox
-                                                                        </label>
-                                                                    </div>
+                                                                        <label htmlFor={`status${staff.id}`} className="checktoggle checkbox-bg">  checkbox </label>
+                                                                    </div> */}
+                                                                    <td>
+                                                                        <div className="status-toggle">
+                                                                            <input
+                                                                                id={`status${staff.id}`}
+                                                                                className="check"
+                                                                                type="checkbox"
+                                                                                checked={staff.status === 1}
+                                                                                onChange={() => handleToggleStatus(staff.id, staff.status)} 
+                                                                            />
+                                                                            <label htmlFor={`status${staff.id}`} className="checktoggle checkbox-bg"> checkbox </label>
+                                                                        </div>
+                                                                    </td>
                                                                 </td>
                                                                 <td>
                                                                     <div className="d-flex align-items-center action-buttons">

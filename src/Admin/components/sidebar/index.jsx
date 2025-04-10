@@ -320,7 +320,7 @@ const SidebarNav = () => {
                   }
                 >
                   <Link to="/admin/generalsettings">
-                    <span> Settings</span>
+                    <span> Settingsss</span>
                   </Link>
                 </li>
                 <li className="submenu">
