@@ -7,8 +7,10 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../../../Helper/apicall";
 require("../../../client/assets/css/custom.css");
+import { useParams } from "react-router-dom";
 
 const MentorSession = () => {
+    const { id } = useParams();
     const [key, setKey] = useState("completed");
     const [showPayment, setShowPaymentPopup] = useState(false);
     const [sessionData, setSessionData] = useState([]);
@@ -16,22 +18,42 @@ const MentorSession = () => {
     useEffect(() => {
         const fetchSessions = async () => {
             try {
+                const token = localStorage.getItem("token");
                 const response = await axios.get(
-                    `${API_BASE_URL}/api/admin/mentorSessionLists/4`,
+                    `${API_BASE_URL}/api/admin/mentorSessionLists/${id}`,
                     {
                         headers: {
-                            Authorization: `Bearer YOUR_ACCESS_TOKEN`, // Replace with actual token
+                            Authorization: `Bearer ${token}`, // Make sure the token is fetched here
                         },
                     }
                 );
-                setSessionData(response.data.data);
+                setSessionData(response.data.data); // Assuming response structure is { data: { data: [...] } }
             } catch (error) {
                 console.error("Error fetching session data:", error);
             }
         };
-
         fetchSessions();
-    }, []);
+    }, [id]);
+
+    useEffect(() => {
+        const fetchSessions = async () => {
+            try {
+                const token = localStorage.getItem("token");
+                const response = await axios.get(
+                    `${API_BASE_URL}/api/admin/mentorSessionLists/${id}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`, // Make sure the token is fetched here
+                        },
+                    }
+                );
+                setSessionData(response.data.data); // Assuming response structure is { data: { data: [...] } }
+            } catch (error) {
+                console.error("Error fetching session data:", error);
+            }
+        };
+        fetchSessions();
+    }, [id]);
 
     return (
         <>
@@ -66,7 +88,6 @@ const MentorSession = () => {
                         <div className="col-sm-12">
 
                             <Tabs id="booking-tabs" activeKey={key} onSelect={(k) => setKey(k)} className="mb-1  custom-tabs">
-
                                 <Tab eventKey="upcoming" title="Upcoming Sessions">
                                 </Tab>
                                 {/* <Tab eventKey="pending" title="Pending Sessions">
@@ -99,12 +120,13 @@ const MentorSession = () => {
                                                     <tr key={index}>
                                                         <td>{session.userId}</td>
                                                         <td>{session.track.trackName}</td>
-                                                        <td>{'Introduction to frontned development'}</td>
-                                                        <td>{'3 Months (6 Sessions)'}</td>
+                                                        <td>{session.track.consultationPrice}</td>
+                                                        <td>{session.track.trackDuration}</td>
                                                         <td>{session.TimeSlot}</td>
-                                                        <td className="amounts cursor-pointer" onClick={() => {
+                                                        {/* <td className="amounts cursor-pointer" onClick={() => {
                                                             setShowPaymentPopup(true);
-                                                        }} >{session.SessionAmount}</td>
+                                                        }} >{session.SessionAmount}</td> */}
+                                                        <td>{session.track.consultationPrice}</td>
                                                         <td>{session.sessionTime}</td>
                                                         <td>
                                                             <Link to={`#`} className="text-black">

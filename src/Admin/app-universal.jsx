@@ -108,8 +108,7 @@ const showHeader = useMemo(() => {
           <Route path="/admin/register" element={<Register />} />
           <Route path="/admin/forgotPassword" element={<ForgotPassword />} />
 
-          <Route  path="/admin/resetPassword" element={<ResetPassword />}  />
-          
+          <Route  path="/admin/resetPassword" element={<ResetPassword />}  />    
           <Route path="/admin/login" element={<Login />} />
 
           <Route element={<ProtectedRoute />}>
@@ -124,8 +123,6 @@ const showHeader = useMemo(() => {
               path="/admin/cancellation-fees"
               element={<CancelationFees />}
             />
-
-
             <Route path="/admin" element={<Dashboard />} />
             <Route
               path="/admin/booking-list"
@@ -160,13 +157,11 @@ const showHeader = useMemo(() => {
             <Route path="/admin/edit-blog/:id" element={<AddBlog />} />
             <Route path="/admin/pending-blog" element={<PendingBlog />} />
             <Route path="/admin/profile" element={<Profile />} />
-            
             <Route path="/admin/payout-requests" element={<PayoutRequests />} />
             <Route path="/admin/mentee-list" element={<Mentee />} />
             <Route path="/admin/deleted-mentees" element={<Mentee />} />
             <Route path="/admin/mentee-detail/:id" element={<MenteeDetail />} />
-
-
+            
             <Route path="/admin/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/admin/termsConditions" element={<TermsConditions />} />
             <Route path="/admin/about-us" element={<AboutUs />} />
@@ -206,7 +201,6 @@ const showHeader = useMemo(() => {
             <Route path="/admin/add-category" element={<AddCategory />} />
          </Route>
             <Route path="/*" element={<Navigate to="/admin/login" replace />} />
-
         </Routes>
 
       </div>

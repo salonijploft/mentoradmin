@@ -23,12 +23,12 @@ const GendralSettings = ({ }) => {
   const basicFormRef = useRef();
 
   // 2. Function to manually trigger the first form submission
+
   const triggerBasicFormSubmit = () => {
     if (basicFormRef.current) {
       basicFormRef.current.handleSubmit();
     }
   };
-
   const [userData, setUserData] = useState([])
   // ... stateOptions and countryOptions code
   useEffect(() => {
@@ -54,7 +54,7 @@ const GendralSettings = ({ }) => {
             cancellationFees: settingData.cancellationFees || "",
             payoutThreshold: settingData.payoutThreshold || "",
             mobileNo: settingData.mobileNo || "",
-            email: settingData.Email || "",
+            Email: settingData.Email || "",
             facebookLink: settingData.facebookLink || "",
             instagramLink: settingData.instagramLink || "",
             linkedInLink: settingData.linkedInLink || "",
@@ -95,7 +95,6 @@ const GendralSettings = ({ }) => {
         cancellationFees: values.cancellationFees,
         payoutThreshold: values.payoutThreshold,
       };
-
       const response = await axios.post(`${API_BASE_URL}/api/admin/updateOrCreateSetting`, payload, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -103,12 +102,20 @@ const GendralSettings = ({ }) => {
         }
       });
 
+      // if (response.data.status === 200) {
+      //   toast.success("Basic details updated successfully!", { position: "top-right" });
+      //   resetForm(); // Reset form fields after successful submission
+      // } else {
+      //   toast.error("Failed to update Basic details!");
+      // }
       if (response.data.status === 200) {
         toast.success("Basic details updated successfully!", { position: "top-right" });
-        resetForm(); // Reset form fields after successful submission
-      } else {
-        toast.error("Failed to update Basic details!");
-      }
+        setUserData((prev) => ({
+          ...prev,
+          ...payload
+        }));
+        resetForm();
+      }      
     } catch (error) {
       console.error("Error saving Basic details:", error);
       toast.error("An error occurred while saving Basic details.");
@@ -119,18 +126,18 @@ const GendralSettings = ({ }) => {
 
 
   /// function to update the setting links
-  
-  const handleUpdate = async (values, { setSubmitting, resetForm }) => {
+  const handleLinkSubmit = async (values, { setSubmitting, resetForm }) => {
     try {
       const payload = {
-        email: values.email,
+        Email: values.Email,
         mobileNo: values.mobileNo,
+        facebookLink: values.facebookLink,
         instagramLink: values.instagramLink,
         linkedInLink: values.linkedInLink,
         twitterLink: values.twitterLink,
         address: values.address
       };
-  
+
       const response = await axios.post(
         `${API_BASE_URL}/api/admin/updateOrCreateSettingLinks`,
         payload,
@@ -141,23 +148,33 @@ const GendralSettings = ({ }) => {
           },
         }
       );
-  
+
       console.log("Response Data:", response.data);
-  
+
+      // if (response.data.status === 200) {
+      //   toast.success("Setting links updated successfully.");
+      //   resetForm();
+      // } else {
+      //   toast.error(`Error: ${response.data.message}`);
+      // }
       if (response.data.status === 200) {
         toast.success("Setting links updated successfully.");
-        resetForm(); // ✅ Optional: use only if you want to clear the form
+        setUserData((prev) => ({
+          ...prev,
+          ...payload
+        }));
+        resetForm();
       } else {
-        toast.error(`Error: ${response.data.message}`);
-      }
+          toast.error(`Error: ${response.data.message}`);
+        }
     } catch (error) {
       console.error("API Error:", error);
       toast.error("An error occurred while updating settings.");
     } finally {
-      setSubmitting(false); // ✅ Important to stop Formik loading state
+      setSubmitting(false);
     }
   };
-  
+
   console.log("userdata", userData)
 
   return (
@@ -296,7 +313,6 @@ const GendralSettings = ({ }) => {
                           </div>
                         </form>
                       )}
-
                     </Formik>
                   </div>
                 </div>
@@ -304,89 +320,84 @@ const GendralSettings = ({ }) => {
               <div className="col-md-6">
                 <div className="card">
                   <div className="card-header">
-                    <h5 className="card-title">Social Links </h5>
+                    <h5 className="card-title">Social Links</h5>
                   </div>
                   <div className="card-body pt-0">
                     <Formik
                       initialValues={{
-                        facebook: userData.facebookLink || "",
-                        instagram: userData.instagramLink || "",
-                        linkedin: userData.linkedInLink || "",
-                        twitter: userData.twitterLink || "",
-                        address: userData.address || "",
-                        mobile: userData.mobileNo || "",
-                        email: userData.email || "",
+                        facebookLink: userData.facebookLink || "",
+                        mobileNo: userData.mobileNo || "",
+                        instagramLink: userData.instagramLink || "",
+                        linkedInLink: userData.linkedInLink || "",
+                        twitterLink: userData.twitterLink || "",
+                        Email: userData.Email || "",
+                        address: userData.address || ""
                       }}
-                      // validationSchema={addressSchema}
                       enableReinitialize={true}
-                      onSubmit={handleUpdate} // Ensure this is correct
+                      onSubmit={handleLinkSubmit}
                     >
-                      {({ errors, touched, handleUpdate }) => ( // Use handleSubmit here
-                        <Form onSubmit={handleUpdate}>
+                      {({ handleSubmit }) => (
+                        <form onSubmit={handleSubmit}>
                           <div className="settings-form">
-                            {/* Facebook */}
-                            <div className="form-group">
-                              <label>Facebook Link <span className="star-red">*</span></label>
-                              <Field type="text" name="facebook" className="form-control" placeholder="Enter Facebook Link" />
-                              <ErrorMessage name="facebook" component="div" className="text-danger" />
-                            </div>
-                            {/* Instagram */}
-                            <div className="form-group">
-                              <label>Instagram Link <span className="star-red">*</span></label>
-                              <Field type="text" name="instagram" className="form-control" placeholder="Enter Instagram Link" />
-                              <ErrorMessage name="instagram" component="div" className="text-danger" />
-                            </div>
-                            {/* LinkedIn */}
-                            <div className="form-group">
-                              <label>LinkedIn Link <span className="star-red">*</span></label>
-                              <Field type="text" name="linkedin" className="form-control" placeholder="Enter LinkedIn Link" />
-                              <ErrorMessage name="linkedin" component="div" className="text-danger" />
-                            </div>
-                            {/* Twitter */}
-                            <div className="form-group">
-                              <label>Twitter Link <span className="star-red">*</span></label>
-                              <Field type="text" name="twitter" className="form-control" placeholder="Enter Twitter Link" />
-                              <ErrorMessage name="twitter" component="div" className="text-danger" />
-                            </div>
 
+                            <div className="form-group">
+                              <label>Facebook Link *</label>
+                              <Field type="text" name="facebookLink" className="form-control" placeholder="Enter Facebook Link" />
+                            </div>
+                            <div className="form-group">
+                              <label>Instagram *</label>
+                              <Field type="text" name="instagramLink" className="form-control" placeholder="Enter Facebook Link" />
+                            </div>
+                            <div className="form-group">
+                              <label>LinkedIn *</label>
+                              <Field type="text" name="linkedInLink" className="form-control" placeholder="Enter LinkedIn Link" />
+                            </div>
+                            <div className="form-group">
+                              <label>Twitter *</label>
+                              <Field type="text" name="twitterLink" className="form-control" placeholder="Enter Twitter Link" />
+                            </div>
                             <h5 className="title">Address & Contact Details</h5>
-                            {/* Address */}
-                            <div className="form-group mt-3">
+
+                             <div className="form-group">
+                              <label>Mobile No *</label>
+                              <Field type="text" name="mobileNo" className="form-control" placeholder="Enter Mobile No" />
+                            </div>
+                            <div className="form-group">
+                              <label>Address *</label>
+                              <Field type="text" name="address" className="form-control" placeholder="Enter Address" />
+                            </div>
+                            <div className="form-group">
+                              <label>Email *</label>
+                              <Field type="text" name="Email" className="form-control" placeholder="Enter Email" />
+                            </div>  
+                            {/* <div className="form-group mt-3">
                               <label>Address <span className="star-red">*</span></label>
                               <Field type="text" name="address" className="form-control" placeholder="Enter Address" />
-                              <ErrorMessage name="address" component="div" className="text-danger" />
                             </div>
 
                             {/* Mobile No */}
-                            <div className="form-group">
+                            {/* <div className="form-group">
                               <label>Mobile No <span className="star-red">*</span></label>
-                              <Field type="text" name="mobile" className="form-control" placeholder="Enter Mobile No" />
-                              <ErrorMessage name="mobile" component="div" className="text-danger" />
-                            </div>
+                              <Field type="text" name="mobileNo" className="form-control" placeholder="Enter Mobile No" />
+                            </div> */}
 
                             {/* Email */}
-                            <div className="form-group">
+                            {/* <div className="form-group">
                               <label>Email <span className="star-red">*</span></label>
                               <Field type="text" name="email" className="form-control" placeholder="Enter Email" />
-                              <ErrorMessage name="email" component=" div" className="text-danger" />
-                            </div>
+                            </div> */}  
 
-                            {/* Buttons */}
-                            <div className="form-group mb-0">
-                              <div className="settings-btns">
-                                <button type="submit" className="btn btn-primary mx-2">Update</button>
-                                {/* <button type="reset" className="btn btn-grey">Cancel</button> */}
-                              </div>
-                            </div>
+                             <div className="form-group">
+                              <button type="submit" className="btn btn-primary">Update</button>
+                             </div>
                           </div>
-                        </Form>
+                        </form>
                       )}
                     </Formik>
                   </div>
                 </div>
               </div>
             </div>
-            {/* /Settings */}
           </div>
         </div>
       </div>

@@ -477,7 +477,6 @@
 // export default Mentor;
 
 
-
 import React, { useState, useEffect } from "react";
 import { Table } from "antd";
 import SidebarNav from "../sidebar";
@@ -578,7 +577,7 @@ const Mentor = () => {
       }
       const newStatus = currentStatus === 1 ? 0 : 1;
       const response = await axios.post(
-        `${API_BASE_URL}/api/admin/account StatusUpdate`,
+        `${API_BASE_URL}/api/admin/accountStatusUpdate`,
         { id: mentorId, status: newStatus },
         {
           headers: {
@@ -603,9 +602,68 @@ const Mentor = () => {
     }
   };
 
-  const handleVerify = async (mentorId, newStatus) => {
-    if (newStatus === 2 || newStatus === 3) {
-      setSelectedMentor(mentorId);
+  // const handleVerify = async (mentorId, newStatus) => {
+  //   if (newStatus === 2 || newStatus === 3) {
+  //     setSelectedMentor(mentorId);
+  //     setShowModal(true);
+  //     return;
+  //   }
+  //   try {
+  //     const response = await axios.post(
+  //       `${API_BASE_URL}/api/admin/verifyStatusUpdate`,
+  //       { verifyStatus: newStatus, id: mentorId, rejectedReson: "" },
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //           "Content-Type": "application/json",
+  //         },
+  //       }
+  //     );
+  //     if (response.status === 200) {
+  //       fetchMentors();
+  //       toast.success(`Mentor Verify Status updated successfully!`, { position: "top-right" });
+  //     }
+  //   } catch (error) {
+  //     console.error("Error updating mentor verify status:", error);
+  //   }
+  // };
+
+  // const handleVerify = async (mentorId, newStatus, rejectionReason = "") => {
+  //   if ((newStatus === 2 || newStatus === 3) && !rejectionReason) {
+  //     setSelectedMentor({ id: mentorId, status: newStatus });
+  //     setShowModal(true);
+  //     return;
+  //   }
+  //   try {
+  //     const response = await axios.post(
+  //       `${API_BASE_URL}/api/admin/verifyStatusUpdate`,
+  //       {
+  //         verifyStatus: newStatus,
+  //         id: mentorId,
+  //         rejectedReson: rejectionReason,
+  //       },
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //           "Content-Type": "application/json",
+  //         },
+  //       }
+  //     );
+  //     if (response.status === 200) {
+  //       console.log("rejectreason:", rejectionReason)
+  //       fetchMentors();
+  //       toast.success("Mentor Verify Status updated successfully!", {
+  //         position: "top-right",
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error("Error updating mentor verify status:", error);
+  //   }
+  // };
+
+  const handleVerify = async (mentorId, newStatus, rejectionReason = "") => {
+    if ((newStatus === 2 || newStatus === 3) && !rejectionReason) {
+      setSelectedMentor({ id: mentorId, status: newStatus });
       setShowModal(true);
       return;
     }
@@ -613,7 +671,11 @@ const Mentor = () => {
     try {
       const response = await axios.post(
         `${API_BASE_URL}/api/admin/verifyStatusUpdate`,
-        { verifyStatus: newStatus, id: mentorId, rejectedReson: "" },
+        {
+          verifyStatus: newStatus,
+          id: mentorId,
+          rejectedReason: rejectionReason, 
+        },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -621,15 +683,18 @@ const Mentor = () => {
           },
         }
       );
-
+  
       if (response.status === 200) {
         fetchMentors();
-        toast.success(`Mentor Verify Status updated successfully!`, { position: "top-right" });
+        toast.success("Mentor Verify Status updated successfully!", {
+          position: "top-right",
+        });
       }
     } catch (error) {
       console.error("Error updating mentor verify status:", error);
     }
   };
+  
 
   const handleSubmit = () => {
     if (selectedMentor) {
@@ -639,29 +704,29 @@ const Mentor = () => {
     }
   };
 
-  const submitRejectionReason = async () => {
-    try {
-      const response = await axios.post(
-        `${API_BASE_URL}/api/admin/verifyStatusUpdate`,
-        { verifyStatus: verifyStatuss, id: selectedMentor, rejectedReason: rejectionReason },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+  // const submitRejectionReason = async () => {
+  //   try {
+  //     const response = await axios.post(
+  //       `${API_BASE_URL}/api/admin/verifyStatusUpdate`,
+  //       { verifyStatus: verifyStatuss, id: selectedMentor, rejectedReason: rejectionReason },
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //           "Content-Type": "application/json",
+  //         },
+  //       }
+  //     );
 
-      if (response.status === 200) {
-        toast.success("Rejection reason submitted!", { position: "top-right" });
-        setShowModal(false);
-        setRejectionReason("");
-        fetchMentors();
-      }
-    } catch (error) {
-      console.error("Error submitting rejection reason:", error);
-    }
-  };
+  //     if (response.status === 200) {
+  //       toast.success("Rejection reason submitted!", { position: "top-right" });
+  //       setShowModal(false);
+  //       setRejectionReason("");
+  //       fetchMentors();
+  //     }
+  //   } catch (error) {
+  //     console.error("Error submitting rejection reason:", error);
+  //   }
+  // };
 
   const handleDelete = async (mentorId) => {
     Swal.fire({
@@ -680,7 +745,6 @@ const Mentor = () => {
               Authorization: `Bearer ${token}`,
             },
           });
-
           if (response.status === 200) {
             toast.success("Mentor deleted successfully!");
             setMentors((prevMentors) => prevMentors.filter((mentor) => mentor.id !== mentorId));
@@ -691,6 +755,14 @@ const Mentor = () => {
         }
       }
     });
+  };
+
+  const submitRejectionReason = () => {
+    if (selectedMentor) {
+      handleVerify(selectedMentor.id, selectedMentor.status, rejectionReason);
+      setShowModal(false);
+      setRejectionReason("");
+    }
   };
 
   return (
@@ -795,28 +867,27 @@ const Mentor = () => {
                                 </div>
                               </td>
                               <td>
-                              <Link to={`/admin/mentor-tracks/${mentor.id}`}>
+                                <Link to={`/admin/mentor-tracks/${mentor.id}`}>
                                   <button className="btn btn-primary">View</button>
-                                </Link> 
+                                </Link>
                               </td>
                               {(mentor.verifyStatus === 0) ? (
                                 <td>
-                                  <select
-                                    value={mentor.verifyStatus}
+                                  <select value={mentor.verifyStatus}
                                     onChange={(e) => handleVerify(mentor.id, parseInt(e.target.value))}
                                     className="form-select"
                                   >
                                     <option value="0">Pending</option>
                                     <option value="1">Approved</option>
-                                    <option value="2">Soft Reject</option>
-                                    <option value="3">Hard Reject</option>
+                                    <option value="2"> Reject</option>
+                                    {/* <option value="3">Hard Reject</option> */}
                                   </select>
                                 </td>
                               ) : (mentor.verifyStatus === 2) ? (
-                                <span className="user-name">Soft Rejected</span>
+                                <span className="user-name">Rejected</span>
                               ) : ""}
                               {mentor.verifyStatus === 2 && (
-                                <td>{mentor.rejectedReson ? mentor.rejectedReson : "N/A"}</td>
+                                <td>{mentor.rejectedReason ? mentor.rejectedReason : "N/A"}</td>
                               )}
                               <td>{mentor.lastLoginDate || "-"}</td>
                               <td>
@@ -836,7 +907,7 @@ const Mentor = () => {
                                           <FaWallet fontSize={"18px"} />
                                         </Link>
                                       )}
-                                      <Link>
+                                      <Link to={`/admin/mentor-sessions/${mentor.id}`}>
                                         <button className="btn btn-primary">Sessions</button>
                                       </Link>
                                     </>
@@ -869,6 +940,7 @@ const Mentor = () => {
                         <Button
                           variant="danger"
                           onClick={submitRejectionReason}
+                          disabled={!rejectionReason.trim()}
                         >
                           Submit
                         </Button>
@@ -894,5 +966,4 @@ const Mentor = () => {
     </>
   );
 };
-
 export default Mentor;

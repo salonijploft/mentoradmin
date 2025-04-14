@@ -61,7 +61,7 @@ const Blogs = () => {
     fetchCategories();
     fetchBlogList();
   }, [page, isDelete]);
-
+  
   
   const deleteBlogHandler = async (id) => {
     const result = await Swal.fire({

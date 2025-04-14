@@ -80,7 +80,6 @@ const CreateSubadmin = () => {
             toast.error("Error fetching staff details. Please try again.");
         }
     };
-
     useEffect(() => {
         if (isEditMode && staffId) {
             fetchStaffDetails();
