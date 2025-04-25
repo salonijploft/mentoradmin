@@ -1,10 +1,10 @@
-import React from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import React from 'react';
+import { Navigate, Outlet } from 'react-router-dom';
+import Cookies from 'js-cookie';
 
-const ProtectedRoute = ({ children }) => {
-  const auth = localStorage.getItem("token");
-
-  return auth ? <><Outlet /></> : <Navigate to="/admin/login" />
+const PrivateRoute = () => {
+  const token = Cookies.get('token');
+  return token ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
-export default ProtectedRoute;
+export default PrivateRoute;

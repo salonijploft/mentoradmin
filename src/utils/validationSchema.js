@@ -49,7 +49,7 @@ export const subadmin = Yup.object().shape({
   lastName: Yup.string().required("Last Name is required"),
   email: Yup.string().email("Invalid email").required("Email is required"),
   password: Yup.string().required("Password is required"),
-  // image: Yup.string().required("Image is required")
+  // image: Yup.string().required("Image is required ")
 });
 
 // export const BlogSchma = Yup.object({
@@ -106,3 +106,14 @@ export const categorySchma = Yup.object().shape({
   categoryTitle: Yup.string().required("Category Title is required"),
   status: Yup.string().required("Status is required"),
 });
+
+
+export const audienceSchema = Yup.object().shape({
+  audienceName: Yup.string().required("Audience Name is required"),
+  status: Yup.string().required("Status is required")
+});
+
+export const skillSchema = Yup.object().shape({
+  skillName: Yup.string().required("Skills Name is required"),
+  status: Yup.string().required("Status is required"),
+})

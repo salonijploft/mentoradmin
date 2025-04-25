@@ -8,7 +8,7 @@ const Seo = () => {
     <div>
         <>
         <div >
-                    {/* Header */}
+              {/* Header */}
                     <SidebarNav />
                     {/* Page Wrapper */}
 

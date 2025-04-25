@@ -8,7 +8,9 @@ import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Swal from "sweetalert2";
-import { Spinner } from "react-bootstrap"; // Import Spinner
+import { Spinner } from "react-bootstrap"; 
+import Cookies from "js-cookie"; 
+import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
 
 const GoalList = () => { 
     const [goals, setGoals] = useState([]);
@@ -18,7 +20,7 @@ const GoalList = () => {
     const [page, setPage] = useState(1);
     const [loading, setLoading] = useState(true); // New state for loader
     const navigate = useNavigate();
-    const token = localStorage.getItem("token");
+    const token = Cookies.get('token');       
 
     const fetchData = async () => {
         setLoading(true); // Start loading
@@ -28,13 +30,13 @@ const GoalList = () => {
             return;
         }
         try {
-            const response = await axios.get(`${API_BASE_URL}/api/admin/getMenteeGoals?limit=${limit}&page=${page}`, {
+            const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getMenteeGoals?limit=${limit}&page=${page}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json"
                 },
             });
-            console.log("Response Data:", response.data.pagination.currentPage); // Debugging
+            console.log("Response Data:", response.data.pagination.currentPage); 
             if (response.data.status === 200) {
                 setGoals(response.data.data); // Ensure goals is an array
                 setCurrentPage(response.data.pagination.currentPage);
@@ -84,7 +86,7 @@ const GoalList = () => {
 
         if (result.isConfirmed) {
             try {
-                const response = await axios.get(`${API_BASE_URL}/api/admin/deleteMenteeGoal/${id}`, {
+                const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/deleteMenteeGoal/${id}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 console.log("Delete API response:", response);

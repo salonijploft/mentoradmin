@@ -10,6 +10,8 @@ import { Spinner } from "react-bootstrap";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Swal from "sweetalert2";
+import Cookies from "js-cookie"; 
+import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
 
 const Blogs = () => {
   const [blog, setBlog] = useState([]);
@@ -20,11 +22,12 @@ const Blogs = () => {
   const [page, setPage] = useState(1);
   const [isDelete, setIsDelete] = useState(false);
   const [loading, setLoading] = useState(false); 
+  // const token = Cookies.getItem("token");
 
   const fetchCategories = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(`${API_BASE_URL}/api/admin/getMenteeCategories`, {
+      const token = Cookies.get('token');
+      const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getMenteeCategories`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.data.status === 200) {
@@ -38,8 +41,8 @@ const Blogs = () => {
   const fetchBlogList = async () => {
     setLoading(true); 
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(`${API_BASE_URL}/api/admin/getBlogs?limit=${limit}&page=${page}`, {
+      const token = Cookies.get('token');
+      const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getBlogs?limit=${limit}&page=${page}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -74,8 +77,8 @@ const Blogs = () => {
       confirmButtonText: 'Yes, delete it!'
     });
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(`${API_BASE_URL}/api/admin/deleteBlog/${id}`, {
+      const token = Cookies.get('token');
+      const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/deleteBlog/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -132,7 +135,7 @@ const Blogs = () => {
                           blog.map((item) => (
                             <tr key={item.id} >
                               <td>{item.name}</td>
-                              <td>{item.category}</td>
+                              <td>{item.categoryInfo?.categoryName}</td>
                               <td>{new Intl.DateTimeFormat('en-GB', {
                                 day: '2-digit',
                                 month: 'short',
@@ -140,7 +143,7 @@ const Blogs = () => {
                               }).format(new Date(item.createdAt))}</td>
                               <td>{item.status === 1 ? "Published" : "Draft"}</td>
                               <td>
-                                <div className="d-flex action-buttons">
+                                <div >
                                   <Link to={`/admin/edit-blog/${item.id}`} className="me-2">
                                     <MdEdit fontSize={"18px"} />
                                   </Link>

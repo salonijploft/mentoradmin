@@ -30,6 +30,7 @@ const SidebarNav = () => {
   const [isSidebarExpanded, setSidebarExpanded] = useState(false);
   const [isMouseOverSidebar, setMouseOverSidebar] = useState(false);
 
+
   useEffect(() => {
     if (
       isMouseOverSidebar &&
@@ -91,8 +92,6 @@ const SidebarNav = () => {
                   </Link>
                 </li>
 
-
-
                 <li className="submenu">
                   <Link
                     to="#"
@@ -127,10 +126,8 @@ const SidebarNav = () => {
                           }
                         >
                           Pending Mentors
-
                         </Link>
                       </li>
-
 
                       <li>
                         <Link
@@ -150,10 +147,8 @@ const SidebarNav = () => {
                           }
                         >
                           Deleted Mentors
-
                         </Link>
                       </li>
-
                       {/* <li>
                         <Link
                           to="/admin/reverify-mentors"
@@ -162,18 +157,13 @@ const SidebarNav = () => {
                           }
                         >
                           Re-Approved Mentors
-
                         </Link>
                       </li> */}
-
-
                     </ul>
                   ) : (
                     ""
                   )}
                 </li>
-
-
                 <li className="submenu">
                   <Link
                     to="#"
@@ -222,8 +212,6 @@ const SidebarNav = () => {
                     <span>Mentorship Categories</span>
                   </Link>
                 </li>
-
-
                 <li
                   className={pathname?.includes("admin/goal-list") ? "active" : ""}
                 >
@@ -240,9 +228,7 @@ const SidebarNav = () => {
                 </li>
 
 
-                <li
-                  className={pathname?.includes("cancellation-fees") ? "active" : ""}
-                >
+                <li className={pathname?.includes("cancellation-fees") ? "active" : ""} >
                   <Link to="/admin/cancellation-fees">
                     <span>Cancellation Fees</span>
                   </Link>
@@ -272,23 +258,17 @@ const SidebarNav = () => {
                     <span>Remmited WHT</span>
                   </Link>
                 </li>
-
-
                 <li className={pathname?.includes("wht-list") ? "active" : ""}>
                   <Link to="/admin/wht-list?type=unremmited">
                     <span>Unremmited WHT</span>
                   </Link>
                 </li> */}
 
-                <li
-                  className={pathname?.includes("dispute-management") ? "active" : ""}
-                >
+                <li className={pathname?.includes("dispute-management") ? "active" : ""} >
                   <Link to="/admin/dispute-management">
                     <span>Dispute Management</span>
                   </Link>
                 </li>
-
-
 
                 <li
                   className={pathname?.includes("help-support") ? "active" : ""}
@@ -297,9 +277,6 @@ const SidebarNav = () => {
                     <span>Help & Support</span>
                   </Link>
                 </li>
-
-
-
                 <li
                   className={
                     pathname?.includes("/admin/blogs") ? "active" : ""
@@ -309,6 +286,27 @@ const SidebarNav = () => {
                     <span>Blogs</span>
                   </Link>
                 </li>
+                <li
+                  className={
+                    pathname?.includes("/admin/blogs") ? "active" : ""
+                  }
+                >
+                  {/* Two new List */}
+                  <Link to="/admin/audience">
+                    <span>Audience List</span>
+                  </Link>
+                </li>
+
+                <li
+                  className={
+                    pathname?.includes("/admin/audience") ? "active" : ""
+                  }
+                >
+                  <Link to="/admin/skills">
+                    <span>Skill Lists</span>
+                  </Link>
+                </li>
+
                 <li
                   className={
                     pathname?.includes("settings") ||
@@ -371,8 +369,7 @@ const SidebarNav = () => {
                         </Link>
                       </li>
                       <li>
-                        <Link
-                          to="/admin/about-us"
+                        <Link to="/admin/about-us"
                           className={
                             pathname?.includes("about-us") ? "active" : ""
                           }
@@ -380,7 +377,6 @@ const SidebarNav = () => {
                           About Us
                         </Link>
                       </li>
-
                     </ul>
                   ) : (
                     ""

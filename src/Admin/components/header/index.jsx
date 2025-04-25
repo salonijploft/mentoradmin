@@ -3,58 +3,67 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../../../Helper/apicall";
 import { avatar12, logo1, logoSmall } from "../imagepath";
+import Cookies from "js-cookie"; 
 
-const Header = ( ) => {
+const Header = () => {
   const [userData, setUserData] = useState(null);
   const [profileImg, setProfileImg] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem("token"));
+  const [isAuthenticated, setIsAuthenticated] = useState(!!Cookies.get("token"));
   const navigate = useNavigate();
-
-   const fetchUserProfile = async () => {
+  const token = Cookies.get("token")
+ 
+  const fetchUserProfile = async () => {
     try {
-      const token = localStorage.getItem("token");
       const response = await axios.get(`${API_BASE_URL}/api/admin/profileDetail`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
       if (response.data.status === 200) {
         setUserData(response.data.data);
-        setProfileImg(response.data.data.profileImage);
+        setProfileImg(`${API_BASE_URL}/${response.data.data.profileImage}?t=${Date.now()}`); // Prevent caching
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
     }
   };
-   // ✅ On mount + on profile update
-   useEffect(() => {
+
+  useEffect(() => {
     if (isAuthenticated) fetchUserProfile();
-  
-    const handleProfileUpdated = () => {
-      fetchUserProfile();
+
+    const handleProfileUpdated = (event) => {
+      const newProfileImage = event.detail.profileImage;
+      if (newProfileImage) {
+        // Update the profile image immediately
+        setProfileImg(`${API_BASE_URL}/${newProfileImage}?t=${Date.now()}`); 
+      }
     };
-  
+    const handleLoginSuccess = () => {
+      setIsAuthenticated(true); // Update authentication state
+      fetchUserProfile(); // Re-fetch user profile
+    };
+
+    // Add event listeners for profile updates and login success
     window.addEventListener("profile-updated", handleProfileUpdated);
-  
+    window.addEventListener("login-success", handleLoginSuccess);
+     
     return () => {
+      // Clean up event listeners on component unmount
       window.removeEventListener("profile-updated", handleProfileUpdated);
+      window.removeEventListener("login-success", handleLoginSuccess);
     };
   }, [isAuthenticated]);
 
-   
-
   // Logout function
   const handleLogout = () => {
-    localStorage.removeItem("token"); // Clear token
-    window.location.href = "/admin/login";  
+    Cookies.remove("token"); 
+    setIsAuthenticated(false); 
+    window.dispatchEvent(new Event("logout-success"));
+    // navigate("/admin/login"); 
+    window.location.href = "/admin/login"
   };
-  
 
   // Conditional styles for authenticated users
-  const profileImage = userData?.profileImage
-  ? `${API_BASE_URL}/${userData.profileImage}`
-  : avatar12;
+  const profileImage = profileImg ? profileImg : avatar12;
 
-  
   return (
     <>
       {/* Header */}
@@ -68,7 +77,6 @@ const Header = ( ) => {
             <img src={logoSmall} alt="Logo" width="30" height="30" />
           </Link>
         </div>
-
         {/* Sidebar Toggle */}
         <Link to="#" id="toggle_btn" onClick={() => document.body.classList.toggle("mini-sidebar")}>
           <i className="fe fe-text-align-left"></i>
@@ -86,10 +94,10 @@ const Header = ( ) => {
             <li className="nav-item dropdown has-arrow">
               <Link to="#" className="dropdown-toggle nav-link" data-bs-toggle="dropdown">
                 <span className="user-imggg">
-                  <img className="rounded-circle" src={profileImage} width={31} alt="User" />
+                  <img className="rounded-circle" src={profileImage} width={31} alt="User  " />
                 </span>
               </Link>
-              <div className="dropdown-menu">
+              <div className ="dropdown-menu">
                 <Link className="dropdown-item" to="/admin/profile">My Profile</Link>
                 <Link className="dropdown-item" to="#" onClick={handleLogout}>Logout</Link>
               </div>

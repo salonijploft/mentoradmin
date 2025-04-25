@@ -2,90 +2,56 @@ import React from "react";
 import SidebarNav from "../sidebar";
 import LineChart from "./LineChart";
 import StatusCharts from "./StatusCharts";
-
 import { Link } from "react-router-dom";
 import { ExportToExcel } from "./ExportToExcel";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../../Helper/apicall";
-
+// import { userPermissions } from "../../components/context/PermissionContext";
+import Cookies from "js-cookie";
+import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
+import { usePermissions } from "../context/PermissionsProvider";
+import { useUser } from "../context/UserContext";
 
 const Dashboard = () => {
-
   const [excelData, setExcelData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  // useEffect(() => {
-  //   const fetchCategory = async () => {
-  //     try {
-  //       const response = await axios.get(`${API_BASE_URL}/api/admin/getEarlyAccess`, {
-  //         headers: { Authorization: `Bearer ${token}` }
-  //       });
-  //       if (response.data.status === 200) {
-  //         setExcelData(response.data.data);
-  //       }
-  //       const customHeadings = data.map(item => ({
-  //         "Name": item?.Name,  // First "Payment Id"
-  //         "Email": item?.Email,                 // Then "User Name"
-  //         "UserType": item?.userType,
-  //         "Date":item?.Date     // Lastly "Cancel Reason"
-  //       }));
-  //       setExcelData(customHeadings);
-  //     } catch (error) {
-  //       toast.error("Failed to fetch categories. Please try again later");
-  //     }
-  //   };
-  //   fetchCategory();
-  // }, []);
+  const [permissions, setPermissions] = useState([]);
+  const { rolePermissions } = useUser();
 
-  useEffect(() => {
-    // Debug log to confirm the effect is running
-    console.log("Dashboard component mounted, attempting to fetch early access data");
-    
-    const fetchEarlyAccessData = async () => {
-      const apiUrl = `${API_BASE_URL}/api/admin/getEarlyAccess`;
-      console.log("Attempting API call to:", apiUrl);  
-      try {
-        // Get token from localStorage
-        const token = localStorage.getItem("token");
-        console.log("Token available:", !!token); // Log if token exists, not the actual token
-        
-        // Make the API call
-        const response = await axios.get(apiUrl, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {}
-        });
-        
-        console.log("API response received:", response.status);
-        
-        if (response.data.status === 200) {
-          console.log("Early access data:", response.data.data);
-          
-          // Transform the data
-          const formattedData = response.data.data.map(item => ({
-            "Name": item?.name || "",
-            "Email": item?.email || "",
-            "UserType": item?.userType || "",
-            "Date": item?.createdAt ? new Date(item.createdAt).toLocaleDateString() : ""
-          }));
-          
-          setExcelData(formattedData);
-          console.log("Excel data set:", formattedData);
-        } else {
-          console.error("API returned non-200 status:", response.data);
-          toast.error("Failed to fetch early access data: " + response.data.message);
+    useEffect(() => {
+      const fetchEarlyAccessData = async () => {
+        const apiUrl = `${API_BASE_URL}/api/admin/getEarlyAccess`;
+        try {
+          const token = Cookies.get("token");
+          const response = await axiosSecure.get(apiUrl, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+          });
+          if (response.data.status === 200) {
+            const formattedData = response.data.data.map(item => ({
+              "Name": item?.name || "",
+              "Email": item?.email || "",
+              "User  Type": item?.userType || "",
+              "Date": item?.createdAt ? new Date(item.createdAt).toLocaleDateString() : ""
+            }));
+            setExcelData(formattedData);
+          } else {
+            console.error("API returned non-200 status:", response.data);
+          }
+        } catch (error) {
+          console.error("Error fetching early access data:", error);
+        } finally {
+          setIsLoading(false);
         }
-      } catch (error) {
-        console.error("Error fetching early access data:", error);
-        toast.error("Failed to fetch early access data: " + (error.message || "Unknown error"));
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
+      };
     fetchEarlyAccessData();
   }, []);
 
-  // Add a debug render to confirm data state
-  console.log("Current excelData state:", excelData);
+  
+    const hasPermission = (moduleName, action) => {
+    const permission = rolePermissions.find(permission => permission.moduleName === moduleName);
+    return permission ? permission[action] === 1 : false; 
+  };
 
   return (
     <>
@@ -103,7 +69,6 @@ const Dashboard = () => {
                   </ul>
                 </div>
                 <div className="col-sm-3">
-                  {/* <ExportToExcel apiData={excelData} fileName="EarlyAccess" /> */}
                   {isLoading ? (
                     <div>Loading data...</div>
                   ) : (
@@ -113,6 +78,7 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="row">
+            {hasPermission('Dashboard', 'isRead') && ( 
               <div className="col-xl-3 col-sm-6 col-12">
                 <Link to={'/admin/mentor/list'}>
                   <div className="card">
@@ -135,6 +101,10 @@ const Dashboard = () => {
                   </div>
                 </Link>
               </div>
+              )}
+
+
+              {hasPermission('Dashboard', 'isRead') && (  
               <div className="col-xl-3 col-sm-6 col-12">
                 <Link to={'/admin/mentee-list'}>
                   <div className="card">
@@ -142,7 +112,6 @@ const Dashboard = () => {
                       <div className="dash-widget-header">
                         <span className="dash-widget-icon  text-primary-new-yellow">
                           <i className="fe fe-users" />
-
                         </span>
                         <div className="dash-count">
                           <h3>485</h3>
@@ -158,7 +127,9 @@ const Dashboard = () => {
                   </div>
                 </Link>
               </div>
+              )}
               <>
+             {hasPermission('Dashboard', 'isRead') && (
                 <div className="col-xl-3 col-sm-6 col-12">
                   <div className="card">
                     <div className="card-body">
@@ -179,10 +150,11 @@ const Dashboard = () => {
                     </div>
                   </div>
                 </div>
+                )}
 
+                {hasPermission('Dashboard', 'isRead') && (
                 <div className="col-xl-3 col-sm-6 col-12">
                   <div className="card">
-
                     <div className="card-body">
                       <div className="dash-widget-header">
                         <span className="dash-widget-icon  text-primary-new-yellow">
@@ -201,7 +173,8 @@ const Dashboard = () => {
                     </div>
                   </div>
                 </div>
-
+                 )}
+                 {hasPermission('Dashboard', 'isRead')  && (
                 <div className="col-xl-3 col-sm-6 col-12">
                   <Link to={'/admin/transactions-list'}>
                     <div className="card">
@@ -224,10 +197,8 @@ const Dashboard = () => {
                     </div>
                   </Link>
                 </div>
-
-
+                )}
                 <div className="col-xl-3 col-sm-6 col-12">
-
                   <Link to='/admin/refund-requests'>
                     <div className="card">
                       <div className="card-body">
@@ -246,9 +217,7 @@ const Dashboard = () => {
                           </div>
                         </div>
                       </div>
-
                     </div>
-
                   </Link>
                 </div>
 
@@ -269,15 +238,11 @@ const Dashboard = () => {
                           <div className="progress-bar bg-success w-50" />
                         </div>
                       </div>
-
-
                     </div>
                   </div>
                 </div>
                 <div className="col-xl-3 col-sm-6 col-12">
                   <Link to={'/admin/commissions'}>
-
-
                     <div className="card">
                       <div className="card-body">
                         <div className="dash-widget-header blue-round">
@@ -295,14 +260,9 @@ const Dashboard = () => {
                           </div>
                         </div>
                       </div>
-
                     </div>
                   </Link>
                 </div>
-
-
-
-
                 <div className="col-xl-3 col-sm-6 col-12">
                   <Link to={'/admin/wht-list?type=unremmited'}>
                     <div className="card">
@@ -321,8 +281,6 @@ const Dashboard = () => {
                             <div className="progress-bar bg-warning w-50" />
                           </div>
                         </div>
-
-
                       </div>
                     </div>
                   </Link>
@@ -349,29 +307,18 @@ const Dashboard = () => {
                     </div>
                   </Link>
                 </div>
-
-
-
-
-
-
-
-
                 <div className="col-xl-3 col-sm-6 col-12">
                   <Link to='/admin/vat-commission-list?type=unremmitted'>
-
                     <div className="card">
                       <div className="card-body">
                         <div className="dash-widget-header ">
-                          <span className="dash-widget-icon text-warning text-primary-new-yellow">
-                            ₦
-                          </span>
+                          <span className="dash-widget-icon text-warning text-primary-new-yellow">  ₦ </span>
                           <div className="dash-count">
                             <h3>₦ 6253</h3>
                           </div>
                         </div>
                         <div className="dash-widget-info">
-                          <h6 className="text-muted">Total <strong stye={{ color: 'black' }}>VAT</strong> on Commission (Unremitted)</h6>
+                          <h6 className="text-muted">Total <strong style={{ color: 'black' }}>VAT</strong> on Commission (Unremitted)</h6>
                           <div className="progress progress-sm yellow-prgrees">
                             <div className="progress-bar bg-warning w-50" />
                           </div>
@@ -379,7 +326,6 @@ const Dashboard = () => {
                       </div>
                     </div>
                   </Link >
-
                 </div>
 
                 <div className="col-xl-3 col-sm-6 col-12">
@@ -400,23 +346,14 @@ const Dashboard = () => {
                             <div className="green-prgrees w-50" />
                           </div>
                         </div>
-
-
                       </div>
                     </div>
                   </Link>
                 </div>
-
-
-
-
-
-
-
               </>
             </div>
             <div className="row">
-
+            {/* {hasPermission('Dashboard', 'isRead') && (  */}
               <div className="col-md-4 col-lg-6">
                 {/* Sales Chart */}
                 <div className="card card-chart">
@@ -446,13 +383,10 @@ const Dashboard = () => {
                 {/* /Invoice Chart */}
               </div>
             </div>
-
           </div>
         </div>
-        {/* /Page Wrapper */}
       </div>
     </>
   );
 };
-
 export default Dashboard;

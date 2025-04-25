@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 import "bootstrap/dist/css/bootstrap.css";
 import "bootstrap-daterangepicker/daterangepicker.css";
 import React, { useState, useContext, useMemo, useEffect } from "react";
@@ -52,7 +51,13 @@ import GoalList from "./components/AreaOfGoals/GoalList";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ProtectedRoute from "../utils/ProtectedRoute";
-import { AuthProvider } from "./components/context/AuthContext";
+import { AuthProvider } from "./components/AuthContext.js";
+import Addskills from "./components/Skills/addskills.jsx";
+import AddAudience from "./components/Audience/addaudience.jsx";
+import Audience from "./components/Audience/audience.jsx";
+import Skills from "./components/Skills/skillss.jsx";
+import { PermissionsProvider } from "./components/context/PermissionsProvider.js";
+import { UserProvider } from "./components/context/UserContext.js";
 
 const AppUniversal = function () {
   const [menu, setMenu] = useState(false);
@@ -60,6 +65,7 @@ const AppUniversal = function () {
   const { isAuth, setIsAuth } = useContext(Appcontext);
   const location = window?.location;
   console.log("location", location?.pathname);
+ 
  // Determine if the header should be shown based on the current route
  useEffect(() => {
   if (
@@ -87,11 +93,15 @@ const showHeader = useMemo(() => {
     "/admin/500"
   ].includes(location.pathname);
 }, [location.pathname]);
+
   return (
+    <UserProvider>
+    <PermissionsProvider >
+    <AuthProvider>
     <>
       <ToastContainer position="top-right" autoClose={3000} />
       <div className={`main-wrapper ${menu ? "slide-nav" : ""}`}>
-        {/* {
+          {
           location?.pathname == "/admin/login" ||
             location?.pathname == "/admin/register" ||
             location?.pathname == "/admin/forgotPassword" ||
@@ -102,52 +112,31 @@ const showHeader = useMemo(() => {
           ) :
             <Header onMenuClick={() => toggleMobileMenu()}
             />
-        } */}
+        }  
        {showHeader && <Header onMenuClick={toggleMobileMenu} />}
         <Routes>
           <Route path="/admin/register" element={<Register />} />
           <Route path="/admin/forgotPassword" element={<ForgotPassword />} />
-
+          
           <Route  path="/admin/resetPassword" element={<ResetPassword />}  />    
           <Route path="/admin/login" element={<Login />} />
 
           <Route element={<ProtectedRoute />}>
-          
             <Route path="/admin/subadmin/list" element={<Subadminlist />} />
             <Route path="/admin/subadmin/create" element={<CreateSubadmin />} />
 
             <Route path="/admin/subadmin/edit/:staffId" element={<CreateSubadmin />} />
+            <Route path="/admin/cancellation-fees" element={<CancelationFees />} />
 
-
-            <Route
-              path="/admin/cancellation-fees"
-              element={<CancelationFees />}
-            />
             <Route path="/admin" element={<Dashboard />} />
-            <Route
-              path="/admin/booking-list"
+            <Route path="/admin/booking-list" element={<Appointments />} />
 
-              element={<Appointments />}
-            />
+            <Route path="/admin/refund-requests" element={<RefundRequests />} />
 
-            <Route
-              path="/admin/refund-requests"
-              element={<RefundRequests />}
-            />
-
-
-            <Route
-              path="/admin/wht-list"
-              element={<WhtRequests />}
-            />
+            <Route path="/admin/wht-list" element={<WhtRequests />}/>
             <Route path="/admin/vat-commission-list" element={<VatCommissionList />} />
-            <Route
-              path="/admin/commissions"
-              element={<Commission />}
-            />
-            <Route
-              path="/admin/transactions-list"  element={<Transaction />}
-            />
+            <Route path="/admin/commissions" element={<Commission />} />
+            <Route path="/admin/transactions-list"  element={<Transaction />} />
             <Route path="/admin/settings" element={<Settings />} />
             <Route path="/admin/generalsettings" element={<GendralSettings />} />
 
@@ -156,41 +145,38 @@ const showHeader = useMemo(() => {
             <Route path="/admin/add-blog" element={<AddBlog />} />
             <Route path="/admin/edit-blog/:id" element={<AddBlog />} />
             <Route path="/admin/pending-blog" element={<PendingBlog />} />
+            {/* New Routes  */}
+            <Route path="/admin/audience" element={<Audience />}/>
+            <Route path="/admin/addaudience" element={<AddAudience />} />
+            <Route path="/admin/edit-audience/:id" element={<AddAudience />} />
+            <Route path="/admin/skills" element={<Skills />}/>
+            <Route path="/admin/addskills" element={<Addskills />}/>
+            <Route path="/admin/editskills/:id" element={<Addskills />}/>
+
+            {/*  */}
             <Route path="/admin/profile" element={<Profile />} />
             <Route path="/admin/payout-requests" element={<PayoutRequests />} />
             <Route path="/admin/mentee-list" element={<Mentee />} />
             <Route path="/admin/deleted-mentees" element={<Mentee />} />
             <Route path="/admin/mentee-detail/:id" element={<MenteeDetail />} />
-            
+              
             <Route path="/admin/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/admin/termsConditions" element={<TermsConditions />} />
             <Route path="/admin/about-us" element={<AboutUs />} />
             <Route path="/admin/faq-add" element={<Faq />} />
             <Route path="/admin/edit-faq/:id" element={<Faq />} />
             <Route path="/admin/faq" element={<FaqList />} />
-            <Route
-              path="/admin/dispute-management"
-              element={<DisputeList />}
-            />
-            <Route
-              path="/admin/help-support"
-              element={<HelpSupport />}
-            />
-            <Route
-              path="/admin/mentor-wallet/:id"
-              element={<Wallet />}
-            />
-            <Route
-              path="/admin/mentor-sessions/:id"
-              element={<MentorSession />}
-            /> <Route path="/admin/mentor/list" element={<Mentor />} />
+            <Route path="/admin/dispute-management" element={<DisputeList />} />
+            <Route path="/admin/help-support" element={<HelpSupport />} />
+            <Route path="/admin/mentor-wallet/:id" element={<Wallet />} />
+            <Route path="/admin/mentor-sessions/:id" element={<MentorSession />} /> 
+            <Route path="/admin/mentor/list" element={<Mentor />} />
             <Route path="/admin/approved-mentors" element={<Mentor />} />
             <Route path="/admin/reverify-mentors" element={<Mentor />} />
             <Route path="/admin/rejected-mentors" element={<Mentor />} />
             <Route path="/admin/deleted-mentors" element={<Mentor />} />
             <Route path="/admin/pending-mentors" element={<Mentor />} />
             <Route path="/admin/mentor-detail/:id" element={<MentorDetail />} />
-
             <Route path="/admin/mentee-sessions/:id"  element={<MenteeSession />}/>
             <Route path="/admin/mentor-tracks/:id" element={<MentorTracks />} />
             <Route path="/admin/goal-list" element={<GoalList />} />
@@ -202,10 +188,14 @@ const showHeader = useMemo(() => {
          </Route>
             <Route path="/*" element={<Navigate to="/admin/login" replace />} />
         </Routes>
-
       </div>
     </>
+   
+    </AuthProvider>
+    </PermissionsProvider>
+    </UserProvider>
   );
 };
 
 export default AppUniversal;
+ 

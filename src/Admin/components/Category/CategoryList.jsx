@@ -8,6 +8,8 @@ import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Swal from "sweetalert2";
+import Cookies from "js-cookie";
+import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
 
 const CategoryList = () => {
     const [categories, setCategories] = useState([]);
@@ -16,17 +18,17 @@ const CategoryList = () => {
     const [limit, setLimit] = useState(10);
     const [page, setPage] = useState(1);
     const navigate = useNavigate();
-    const token = localStorage.getItem("token");
+    const token = Cookies.get('token');
 
     const fetchData = async () => {
-        const token = localStorage.getItem("token");
+        const token = Cookies.get('token');
         if (!token) {
             console.error("Token not found. Redirecting to login.");
             navigate("/login"); // Redirect if token is missing
             return;
         }
         try {
-            const response = await axios.get(`${API_BASE_URL}/api/admin/getMenteeCategories?limit=${limit}&page=${page}`, {
+            const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getMenteeCategories?limit=${limit}&page=${page}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json"
@@ -80,7 +82,7 @@ const CategoryList = () => {
             }
     
             try {
-                const response = await axios.get(`${API_BASE_URL}/api/admin/deleteMenteeCategory/${id}`, {
+                const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/deleteMenteeCategory/${id}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 console.log("Delete API response:", response);

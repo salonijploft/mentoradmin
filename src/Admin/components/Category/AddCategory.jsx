@@ -9,14 +9,16 @@ import { API_BASE_URL } from "../../../Helper/apicall";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Cookies from "js-cookie";
+import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
 
 const AddCategory = () => {
     const { id } = useParams();
     const location = useLocation();
     const isEditMode = location.pathname.includes(`/admin/edit-category/`);
     const navigate = useNavigate();
-    const token = localStorage.getItem("token");
-
+    const token = Cookies.get('token');
+    
     // State for category data
     const [categoryData, setCategoryData] = useState({
         categoryTitle: "",
@@ -28,7 +30,7 @@ const AddCategory = () => {
         if (isEditMode && id) {
             const fetchCategoryDetails = async () => {
                 try {
-                    const response = await axios.get(`${API_BASE_URL}/api/admin/menteeCategoryDetail/${id}`, {
+                    const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/menteeCategoryDetail/${id}`, {
                         headers: { Authorization: `Bearer ${token}` }
                     });
                     if (response.data.status === 200) {
@@ -59,12 +61,12 @@ const AddCategory = () => {
             let response;
             if (isEditMode) {
                 // Update existing category
-                response = await axios.post(`${API_BASE_URL}/api/admin/updateMenteeCategory/${id}`, payload, {
+                response = await axiosSecure.post(`${API_BASE_URL}/api/admin/updateMenteeCategory/${id}`, payload, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
             } else {
                 // Create new category
-                response = await axios.post(`${API_BASE_URL}/api/admin/createMenteeCategory`, payload, {
+                response = await axiosSecure.post(`${API_BASE_URL}/api/admin/createMenteeCategory`, payload, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
             }

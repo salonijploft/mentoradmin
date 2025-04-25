@@ -6,7 +6,9 @@ import { API_BASE_URL } from "../../../Helper/apicall";
 import { toast } from "react-toastify"; // Import ToastContainer and toast
 import "react-toastify/dist/ReactToastify.css";
 import Swal from "sweetalert2";
-import { Spinner } from "react-bootstrap"; // Import Spinner
+import { Spinner } from "react-bootstrap"; 
+import Cookies from "js-cookie";
+import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
 
 const FaqList = () => {
     const [faqs, setFaqs] = useState([]);
@@ -14,15 +16,14 @@ const FaqList = () => {
     const [categories, setCategories] = useState([]);
     const [loadingFaqs, setLoadingFaqs] = useState(true);
     const [loadingCategories, setLoadingCategories] = useState(true);
-
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
 
     // Fetch FAQs from API
     useEffect(() => {
         const fetchFaqs = async () => {
-            setLoading(true); // Start loading
+            setLoading(true); 
             try {
-                const response = await axios.get(`${API_BASE_URL}/api/admin/getFaqs`, {
+                const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getFaqs`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 if (response.data.status === 200) {
@@ -45,7 +46,7 @@ const FaqList = () => {
         const fetchCategories = async () => {
             setLoadingCategories(true); // Start loading categories
             try {
-                const response = await axios.get(`${API_BASE_URL}/api/admin/getMenteeCategories`, {
+                const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getMenteeCategories`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 if (response.data.status === 200) {
@@ -82,7 +83,7 @@ const FaqList = () => {
 
         if (result.isConfirmed) {
             try {
-                const response = await axios.get(`${API_BASE_URL}/api/admin/deleteFaq/${id}`, {
+                const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/deleteFaq/${id}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 if (response.data.status === 200) {
@@ -95,7 +96,6 @@ const FaqList = () => {
             }
         }
     };
-
     return (
         <>
             <SidebarNav />
@@ -129,7 +129,7 @@ const FaqList = () => {
                                         <tr key={faq.id}>
                                             <td>{index + 1}</td>
                                             <td>{faq.question}</td>
-                                            <td>{getCategoryName(Number(faq.category))}</td>
+                                            <td>{faq.category}</td>
                                             <td>{faq.answer}</td>
                                             <td>
                                                 <Link to={`/admin/edit-faq/${faq.id}`} className="btn btn-warning btn-sm me-2">Edit</Link>

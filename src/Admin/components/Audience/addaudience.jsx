@@ -1,54 +1,51 @@
 import React, { useState, useEffect } from "react";
 import SidebarNav from "../sidebar";
 import { ErrorMessage, Field, Formik } from "formik";
-import { goalSchma } from "../../../utils/validationSchema";
+import { audienceSchema } from "../../../utils/validationSchema"; // Ensure this schema is defined
 import { Form, Spinner } from "react-bootstrap"; // Import Spinner
 import axios from "axios";
 import { API_BASE_URL } from "../../../Helper/apicall";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Cookies from 'js-cookie';
+import Cookies from "js-cookie"; 
 import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
-
-const AddGoals = () => {
+const AddAudience = () => {
+    
     const { id } = useParams();
     const location = useLocation();
-    const isEditMode = location.pathname.includes(`/admin/edit-goal`);
+    const isEditMode = location.pathname.includes(`/admin/edit-audience`);
     const navigate = useNavigate();
-    const token = Cookies.get("token");
-    const [goalData, setGoalsData] = useState({
+    const [audienceData, setAudienceData] = useState({
         status: "Active",
+        audienceName: '', // Initialize audienceName
     });
-    const [goalTitle, setGoalTitle] = useState('');
     const [loading, setLoading] = useState(false); // New loading state
-    
-    // Fetch goals details when in edit mode 
+    const token = Cookies.get('token');
+
+    // Fetch audience details when in edit mode 
     useEffect(() => {
         if (isEditMode && id) {
-            const fetchGoalsDetails = async () => {
+            const fetchAudienceDetails = async () => {
                 try {
-                    const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/menteeGoalDetail/${id}`, {
+                    const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/audienceDetail?id=${id}`, {
                         headers: { Authorization: `Bearer ${token}` },
                     });
-
                     if (response.data.status === 200) {
-                        const { title, status } = response.data.data;
-                        setGoalTitle(title);
-                        setGoalsData({
-                            status: status === 1 ? "Active" : "Inactive",
+                        const { name, status } = response.data.data; // Adjusted to match your data structure
+                        setAudienceData({
+                            audienceName: name, // Set audienceName
+                            status: status === 1 ? "Active" : "Inactive", // Convert status to string
                         });
                     } else {
-                        toast.error("Failed to fetch goal details.");
+                        toast.error("Failed to fetch audience details.");
                     }
                 } catch (error) {
                     console.error("API Error:", error);
-                    toast.error("Something went wrong while fetching goal details.");
+                    toast.error("Something went wrong while fetching audience details.");
                 }
             };
-            if (id) {
-                fetchGoalsDetails();
-            }
+            fetchAudienceDetails(); // Call the function to fetch details
         }
     }, [isEditMode, id, token]);
 
@@ -57,23 +54,23 @@ const AddGoals = () => {
         setLoading(true); // Start loading
         try {
             const payload = {
-                title: values.goalTitle,
+                name: values.audienceName,
                 status: values.status === "Active" ? 1 : 0,
             };
             let response;
             if (isEditMode) {
-                response = await axiosSecure.post(`${API_BASE_URL}/api/admin/updateMenteeGoal/${id}`, payload, {
+                response = await axiosSecure.post(`${API_BASE_URL}/api/admin/updateAudience?id=${id}`, payload, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
             } else {
-                response = await axiosSecure.post(`${API_BASE_URL}/api/admin/createMenteeGoal`, payload, {
+                response = await axiosSecure.post(`${API_BASE_URL}/api/admin/createAudience`, payload, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
             }
             if (response.data.status === 200) {
-                toast.success(isEditMode ? "Goal Updated Successfully!" : { position: "top-right" });
+                toast.success(isEditMode ? "Audience Updated Successfully!" : "Audience Created Successfully!", { position: "top-right" });
                 resetForm();
-                navigate("/admin/goal-list");
+                navigate("/admin/audience");
             } else {
                 toast.error("Failed to process goal. Try again.");
             }
@@ -83,7 +80,7 @@ const AddGoals = () => {
         } finally {
             setLoading(false); // Stop loading
         }
-    }
+    };
 
     const handleBack = () => {
         navigate(-1); // this goes back to the previous page
@@ -97,7 +94,7 @@ const AddGoals = () => {
                     <div className="page-header">
                         <div className="row">
                             <div className="col-sm-12">
-                                <h3 className="page-title">{isEditMode ? "Edit Goal" : "Add Goal"}</h3>
+                                <h3 className="page-title">{isEditMode ? "Edit Audience" : "Add Audience"}</h3>
                             </div>
                         </div>
                     </div>
@@ -107,33 +104,35 @@ const AddGoals = () => {
                                 <div className="card-body">
                                     <Formik
                                         initialValues={{
-                                            goalTitle: goalTitle,  // Formik will control this
-                                            status: goalData.status,
+                                            audienceName: audienceData.audienceName,  
+                                            status: audienceData.status, 
                                         }}
-                                        enableReinitialize
-                                        validationSchema={goalSchma}
+                                        enableReinitialize 
+                                        validationSchema={audienceSchema} 
                                         onSubmit={handleSubmit}
                                     >
+                                        
                                         {({ handleSubmit }) => (
                                             <Form onSubmit={handleSubmit}>
                                                 <div className="row">
-                                                    {/* Goal Title */}
+                                                    {/* Audience Name */}
+                                                    {/* <div className="col */}
+                                                    {/* Audience Name */}
                                                     <div className="col-md-6">
                                                         <div className="form-group">
-                                                            <label>Goal Title *</label>
-                                                            <Field name="goalTitle" className="form-control" type="text" />
-                                                            <ErrorMessage name="goalTitle" component="div" className="text-danger" />
+                                                            <label>Name *</label>
+                                                            <Field name="audienceName" className="form-control" type="text" />
+                                                            <ErrorMessage name="audienceName" component="div" className="text-danger" />
                                                         </div>
                                                     </div>
                                                     {/* Status */}
                                                     <div className="col-md-6">
                                                         <div className="form-group">
-                                                            <label>Status</label>
+                                                            <label>Status *</label>
                                                             <Field as="select" name="status" className="form-control">
                                                                 <option value="Active">Active</option>
                                                                 <option value="Inactive">Inactive</option>
                                                             </Field>
-                                                            {/* <ErrorMessage name="status" component="div" className="text-danger" /> */}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -148,7 +147,7 @@ const AddGoals = () => {
                                                             Back
                                                         </button>
                                                         <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
-                                                            {loading ? <Spinner animation="border" size="sm" /> : (isEditMode ? "Update Goal" : "Create Goal")}
+                                                            {loading ? <Spinner animation="border" size="sm" /> : (isEditMode ? "Update Audience" : "Create Audience")}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -165,4 +164,4 @@ const AddGoals = () => {
     );
 };
 
-export default AddGoals;
+export default AddAudience;

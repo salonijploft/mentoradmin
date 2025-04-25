@@ -8,13 +8,16 @@ import axios from "axios";
 import { API_BASE_URL } from "../../../Helper/apicall";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import moduleUrls from '../../../utils/moduleUrls';
+import Cookies from "js-cookie"; 
+import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
 
 const CreateSubadmin = () => {
     const location = useLocation();
     const { staffId } = useParams();
     const navigate = useNavigate();
     const isEditMode = location.pathname.includes(`/subadmin/edit/`);
-    const token = localStorage.getItem("token");
+    const token = Cookies.get('token');
 
     const [showPassword, setShowPassword] = useState(false);
     const [imagePreview, setImagePreview] = useState(null);
@@ -51,12 +54,20 @@ const CreateSubadmin = () => {
 
     const fetchStaffDetails = async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/api/admin/staffDetail/${staffId}`, {
+            const token = Cookies.get("token");
+            console.log("Auth Token:", token); 
+            if (!token || token.split('.').length !== 3) {
+                toast.error("Invalid or missing auth token.");
+                return;
+            }
+    
+            const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/staffDetail/${staffId}`, {
                 headers: {
+                    "Content-Type": "multipart/form-data",
                     Authorization: `Bearer ${token}`,
                 },
             });
-
+    
             if (response.data.status === 200) {
                 const staffData = response.data.data;
                 const permissions = transformRolePermissions(staffData.RolePermission);
@@ -80,6 +91,7 @@ const CreateSubadmin = () => {
             toast.error("Error fetching staff details. Please try again.");
         }
     };
+    
     useEffect(() => {
         if (isEditMode && staffId) {
             fetchStaffDetails();
@@ -96,7 +108,7 @@ const CreateSubadmin = () => {
             toast.error("Please select a valid image file.");
         }
     };
-
+    
     const handleSubmit = async (values) => {
         try {
             const dataToSend = new FormData();
@@ -110,27 +122,33 @@ const CreateSubadmin = () => {
                 dataToSend.append("profileImage", values.profile_image);
             }
             dataToSend.append("status", values.status);
-
-            const rolePermissions = Object.keys(values.permissions).map((module) => ({
-                moduleName: module,
-                isRead: values.permissions[module].view ? 1 : 0,
-                isAdd: values.permissions[module].create ? 1 : 0,
-                isUpdate: values.permissions[module].edit ? 1 : 0,
-                isDelete: values.permissions[module].delete ? 1 : 0,
-            }));
-
+    
+            const rolePermissions = Object.keys(values.permissions).map((module) => {
+                const moduleUrl = moduleUrls[module]?.view; // Get the URL for the module
+                return {
+                    moduleName: module,
+                    moduleUrl: moduleUrl, // Ensure this is defined
+                    isRead: values.permissions[module].view ? 1 : 0,
+                    isAdd: values.permissions[module].create ? 1 : 0,
+                    isUpdate: values.permissions[module].edit ? 1 : 0,
+                    isDelete: values.permissions[module].delete ? 1 : 0,
+                };
+            });
             rolePermissions.forEach((permission, index) => {
                 dataToSend.append(`rolePermission[${index}][moduleName]`, permission.moduleName);
+                dataToSend.append(`rolePermission[${index}][moduleUrl]`, permission.moduleUrl); 
                 dataToSend.append(`rolePermission[${index}][isRead]`, permission.isRead);
                 dataToSend.append(`rolePermission[${index}][isAdd]`, permission.isAdd);
                 dataToSend.append(`rolePermission[${index}][isUpdate]`, permission.isUpdate);
                 dataToSend.append(`rolePermission[${index}][isDelete]`, permission.isDelete);
             });
+            console.log([...dataToSend]);
+    
             const url = isEditMode
                 ? `${API_BASE_URL}/api/admin/updateStaff/${staffId}`
                 : `${API_BASE_URL}/api/admin/createStaff`;
-
-            const response = await axios({
+    
+            const response = await axiosSecure({
                 method: isEditMode ? "post" : "post",
                 url,
                 data: dataToSend,
@@ -139,7 +157,6 @@ const CreateSubadmin = () => {
                     Authorization: `Bearer ${token}`,
                 },
             });
-
             if (response.status === 200) {
                 toast.success(isEditMode ? "Subadmin updated successfully!" : "Subadmin created successfully!");
                 navigate("/admin/subadmin/list");
@@ -179,30 +196,7 @@ const CreateSubadmin = () => {
                                         }}
                                     >
                                         {({ values, setFieldValue, handleChange }) => (
-                                            <Form>
-                                                {/* <div className="col-md-12 text-right">
-                                                    <div className="col-md-6 text-right">
-                                                        <div className="profile-containers" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginBottom: '20px' }}>
-                                                            <img
-                                                                src={imagePreview || '/assets/img/dummy.png'}
-                                                                alt="Profile"
-                                                                className="profile-images"
-                                                                style={{ width: '150px', height: '150px', borderRadius: '50%' }}
-                                                            />
-                                                            <label htmlFor="profile_image" className="edit-icons" style={{ cursor: 'pointer', marginTop: '10px' }}>
-                                                                <FaEdit />
-                                                            </label>
-                                                            <input
-                                                                type="file"
-                                                                id="profile_image"
-                                                                name="profile_image"
-                                                                accept="image/*"
-                                                                onChange={(e) => handleImageChange(e, setFieldValue)}
-                                                                style={{ display: "none" }}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </div> */}
+                                            <Form>  
                                                 <div className="col-md-12 text-right">
                                                     <div className="col-md-12" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
                                                         <div className="profile-containers" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '20px' }}>
@@ -210,7 +204,7 @@ const CreateSubadmin = () => {
                                                                 src={imagePreview || '/assets/img/dummy.png'}
                                                                 alt="Profile"
                                                                 className="profile-images"
-                                                                style={{ width: '150px', height: '150px', borderRadius: '50%', margin: '0 auto' }} // Center by auto margin
+                                                                style={{ width: '150px', height: '150px', borderRadius: '50%', margin: '0 auto' }} 
                                                             />
                                                             <label htmlFor="profile_image" className="edit-icons" style={{ cursor: 'pointer', marginTop: '10px' }}>
                                                                 <FaEdit />
@@ -269,6 +263,7 @@ const CreateSubadmin = () => {
                                                                 <th>Edit</th>
                                                                 <th>Delete</th>
                                                                 <th>Create</th>
+                                                                {/* <th> URL</th> */}
                                                             </tr>
                                                         </thead>
                                                         <tbody>
@@ -295,7 +290,6 @@ const CreateSubadmin = () => {
                                                         </tbody>
                                                     </table>
                                                 </div>
-
                                                 <div className="col-md-6">
                                                     <div className="form-group">
                                                         <label>Account Status</label>
@@ -306,7 +300,6 @@ const CreateSubadmin = () => {
                                                         </select>
                                                     </div>
                                                 </div>
-
                                                 <div className="text-center mt-4">
                                                     <button className="btn btn-primary" type="submit">
                                                         {isEditMode ? "Update Subadmin" : "Save Subadmin"}

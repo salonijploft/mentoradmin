@@ -7,6 +7,9 @@ import { API_BASE_URL } from "../../../Helper/apicall";
 import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Cookies from "js-cookie"; 
+import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
+
 
 const Faq = () => {
     const { id } = useParams();
@@ -16,24 +19,24 @@ const Faq = () => {
     const [question, setQuestion] = useState([]);
     const [answer, setAnswer] = useState([]);
     const navigate = useNavigate();
+    const token = Cookies.get('token');
+
     const [userData, setUserData] = useState({
         question: "",
         answer: "",
         category: "",
     });
-    const token = localStorage.getItem("token");
-    // Initial form values
     const initialValues = {
         question: "",
         answer: "",
         category: ""
     };
 
-    //   // Fetch categories for the faq's
+    // Fetch categories for the faq's
   useEffect(() => {
     const fetchCategory = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/admin/getMenteeCategories`, {
+        const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getMenteeCategories`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (response.data.status === 200) {
@@ -46,30 +49,7 @@ const Faq = () => {
     fetchCategory();
   }, [token]); 
 
-    // Fetch FAQ details when in edit mode
-    useEffect(() => {
-        if (isEditMode) {
-            const fetchFaqDetails = async () => {
-                try {
-                    const response = await axios.get(`${API_BASE_URL}/api/admin/faqDetail/${id}`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    if (response.data.status === 200) {
-                        const faqData = response.data.data;
-                        setUserData({
-                            question: faqData.question || "",
-                            answer: faqData.answer || "",
-                            category: faqData.category || "",
-                        });
-                    }
-                } catch (error) {
-                    console.error("Fetch error:", error);
-                }
-            };
-            fetchFaqDetails();
-        }
-    }, [isEditMode, id]);
-
+  
  const handleSubmit = async (values, { setSubmitting, resetForm }) => {
         try {
             const payload = {
@@ -77,12 +57,11 @@ const Faq = () => {
                 answer: values.answer,
                 category: values.category
             };
-            const response = await axios.post(`${API_BASE_URL}/api/admin/createFaq`,
+            const response = await axiosSecure.post(`${API_BASE_URL}/api/admin/createFaq`,
                 payload,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`, // Include token in headers
-                        "Content-Type": "application/json"
                     }
                 }
             );
@@ -104,10 +83,10 @@ const Faq = () => {
     useEffect(() => {
         const fetchCategory = async () => {
             try {
-                const response = await axios.get(`${API_BASE_URL}/api/admin/getMenteeCategories`,
+                const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getMenteeCategories`,
                     {
                         headers: {
-                            Authorization: `Bearer ${token}`, // Include token in headers
+                            Authorization: `Bearer ${token}`, 
                             "Content-Type": "application/json"
                         }
                     }
@@ -128,7 +107,13 @@ const Faq = () => {
         if (isEditMode) {
             const fetchFaqDetails = async () => {
                 try {
-                    const response = await axios.get(`${API_BASE_URL}/api/admin/faqDetail/${id}`);
+                    const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/faqDetail/${id}`,  {
+                        headers: {
+                            Authorization: `Bearer ${token}`, 
+                            "Content-Type": "application/json"
+                        }
+                    }
+                )
                     if (response.data.status === 200) {
                         const faqData = response.data.data;
                         setUserData({
@@ -151,20 +136,19 @@ const Faq = () => {
 
     ///update faq
     // Update FAQ
- const handleUpdate = async (values, { setSubmitting, resetForm }) => {
+  const handleUpdate = async (values, { setSubmitting, resetForm }) => {
         console.log("handleUpdate called with values:", values);
         try {
-            const token = localStorage.getItem("token");
+            // const token = localStorage.getItem("token");
             const payload = {
                 question: values.question,
                 answer: values.answer,
                 category: values.category,
             };
             console.log("Updating FAQ with payload:", payload);
-            const response = await axios.post(`${API_BASE_URL}/api/admin/updateFaq/${id}`, payload, {
+            const response = await axiosSecure.post(`${API_BASE_URL}/api/admin/updateFaq/${id}`, payload, {
                 headers: {
-                    Authorization: `Bearer ${token}`, // Include token in headers
-                    "Content-Type": "application/json"
+                    Authorization: `Bearer ${token}`
                 }
             });
             console.log("Response from updateFaq:", response.data);
@@ -228,29 +212,9 @@ const Faq = () => {
                                         className="text-danger"
                                     />
                                 </div>
-                                {/* <div className="mb-3">
-                                    <label className="form-label">Category *</label>
-                                    <Field as="select" name="category" className="form-select">
-                                        <option value="">Select category</option>
-                                        {category.length > 0 ? (
-                                            category.map((cat) => (
-                                                <option key={cat.id} value={cat.id}>
-                                                    {cat.categoryName}
-                                                </option>
-                                            ))
-                                        ) : (
-                                            <option disabled>Loading categories...</option>
-                                        )}
-                                    </Field>
-                                    <ErrorMessage
-                                        name="category"
-                                        component="div"
-                                        className="text-danger"
-                                    />
-                                </div> */}
                                 <div className="mb-3">
                                     <label> Category *</label>
-                                    <Field as="select" className="form-control" name="blogCategory">
+                                    <Field as="select" className="form-control" name="category">
                                         <option value="">Select Category</option>
                                         <option value="General">General</option>
                                         <option value="Mentor">Mentor</option>

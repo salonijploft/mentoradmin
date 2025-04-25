@@ -1,11 +1,7 @@
 import React from "react";
 import SidebarNav from "../sidebar";
 import { Link } from "react-router-dom";
-import {
-  blog01,
-  blog02,
-  blog03,
-} from "../imagepath";
+import { blog01, blog02, blog03} from "../imagepath";
 import FeatherIcon from "feather-icons-react";
 
 const BlogDetails = () => {

@@ -1,0 +1,56 @@
+.pagsi_box {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.pagination {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    gap: 5px;
+}
+
+.page_num {
+    display: inline;
+}
+
+.page-item {
+    display: inline-block;
+}
+
+.page_button, .Prev_pas, .Next_pas {
+    display: inline-block;
+    padding: 8px 12px;
+    margin: 0 2px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+    color: #007bff;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.page_button:hover, .Prev_pas:hover, .Next_pas:hover {
+    background-color: #e9ecef;
+    color: #0056b3;
+}
+
+.active_page .page_button {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.page_num .dot_page {
+    padding: 8px 12px;
+    color: #6c757d;
+}
+
+.page_num .Prev_pas:disabled, .page_num .Next_pas:disabled {
+    color: #6c757d;
+    cursor: not-allowed;
+    background-color: #e9ecef;
+    border-color: #ddd;
+}

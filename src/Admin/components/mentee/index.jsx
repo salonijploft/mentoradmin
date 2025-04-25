@@ -16,9 +16,11 @@ import "react-toastify/dist/ReactToastify.css";
 import { Spinner } from "react-bootstrap";
 import { Button, Modal, Form } from "react-bootstrap";
 import Swal from "sweetalert2";
+import Cookies from 'js-cookie';
+import {axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
+
 
 const Mentee = () => {
-
   const [status, setStatus] = useState(false);
   const [mentors, setMentors] = useState([]);
   const [mentorStatus, setMentorStatus] = useState(false);
@@ -32,13 +34,13 @@ const Mentee = () => {
   const [limit, setLimit] = useState(10);
   const [page, setPage] = useState(1);
   const location = useLocation();
-  const token = localStorage.getItem("token");
+  const token = Cookies.get("token");
 
   // Get the verifyStatus based on the current route
   const routeStatusMap = {
     "/admin/mentee-list": 0,
     "/admin/deleted-mentees": 1
-    
+
   };
   // Get the verifyStatus based on the current route
   const isDelete = routeStatusMap[location.pathname] ?? 0;
@@ -51,8 +53,9 @@ const Mentee = () => {
         throw new Error("Authorization token is missing!");
       }
       const searchParam = filters.MentorName ? `&search=${filters.MentorName}` : "";
-      const response = await axios.get(
-        `${API_BASE_URL}/api/admin/getMentees?type=${isDelete}&limit=${limit}&page=${currentPage}${searchParam}`,
+      const response = await axiosSecure.get(
+        // `${API_BASE_URL}/api/admin/getMentees?type=${isDelete}&limit=${limit}&page=${currentPage}${searchParam}`,
+        `${API_BASE_URL}/api/admin/getMentees?limit=${limit}&page=${page}${searchParam}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -75,7 +78,7 @@ const Mentee = () => {
   // Fetch Mentors when page loads and when filters change
   useEffect(() => {
     fetchMentors();
-  }, [isDelete, currentPage]);
+  }, [page]);
 
   // Handle Input Change
   const handleFilterChange = (e) => {
@@ -101,7 +104,8 @@ const Mentee = () => {
 
   const handleToggleStatus = async (mentorId, currentStatus) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
+      // const token = localStorage.getItem("token");
       if (!token) {
         console.error("No token found! User might not be authenticated.");
         return;
@@ -109,8 +113,8 @@ const Mentee = () => {
 
       const newStatus = currentStatus === 1 ? 0 : 1;
 
-      const response = await axios.post(
-        `${API_BASE_URL}/api/admin/accountStatusUpdate`,
+      const response = await axiosSecure.post(
+        `${API_BASE_URL}/api/admin/menteeStatuUpdate/${mentorId}`,
         { id: mentorId, status: newStatus },
         {
           headers: {
@@ -147,7 +151,8 @@ const Mentee = () => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const response = await axios.get(`${API_BASE_URL}/api/admin/mentorDelete/${mentorId}`, {
+          const token = Cookies.get("token");
+          const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/mentorDelete/${mentorId}`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -190,6 +195,7 @@ const Mentee = () => {
                       <thead>
                         <tr>
                           <th className="text-start">Name / Email</th>
+                          <th>Issubscribed Email</th> 
                           <th>Created At</th>
                           <th>Account Status</th>
                           <th>Last Login Date</th>
@@ -221,10 +227,11 @@ const Mentee = () => {
                                   </Link>
                                 </div>
                                 <div>
-                                  <Link to="#">{mentor.firstName}</Link> <br />
+                                  <Link to="#">{mentor.firstName} {mentor.lastName}</Link> <br />
                                   <span>{mentor.email}</span>
                                 </div>
                               </td>
+                              <td>{mentor.isSubscribeEmail === "1" ? "yes" : "No"}</td>
                               <td>
                                 <span className="user-name">{mentor.createdAt || "-"}</span>
                               </td>
@@ -249,27 +256,17 @@ const Mentee = () => {
                                   <Link to={`/admin/mentee-detail/${mentor.id}`}>
                                     <FaEye fontSize={"18px"} />
                                   </Link>
-
-
                                   <MdDelete fontSize={"18px"} className="text-danger delete-icon mt-1"
                                     onClick={() => handleDelete(mentor.id)}
                                   />
-                                  {/* {pathname?.split("/admin/")[1] !== "deleted-mentors" && ( */}
                                   <>
-                                    {/* {pathname?.split("/admin/")[1] === "approved-mentors" && ( */}
-                                    {/* <Link to={`/admin/mentor-wallet/${mentor.id}`}>
-                                          <FaWallet fontSize={"18px"} />
-                                        </Link> */}
-
                                     <Link>
                                       <FaWallet fontSize={"18px"} />
                                     </Link>
-
                                     {/* <Link to={`/admin/mentor-sessions/${mentor.id}`}>
                                       <button className="btn btn-primary">Sessions</button>
                                     </Link> */}
-
-                                    <Link >
+                                    <Link to={`/admin/mentee-sessions/${mentor.id}`}>
                                       <button className="btn btn-primary">Sessions</button>
                                     </Link>
                                   </>

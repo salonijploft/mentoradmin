@@ -8,18 +8,22 @@ import axios from "axios";
 import { API_BASE_URL } from "../../../Helper/apicall";
 require("../../../client/assets/css/custom.css");
 import { useParams } from "react-router-dom";
+import Cookies from 'js-cookie';
+import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
+
 
 const MentorSession = () => {
     const { id } = useParams();
     const [key, setKey] = useState("completed");
     const [showPayment, setShowPaymentPopup] = useState(false);
     const [sessionData, setSessionData] = useState([]);
+    const token = Cookies.get("token");
 
     useEffect(() => {
         const fetchSessions = async () => {
             try {
-                const token = localStorage.getItem("token");
-                const response = await axios.get(
+                // const token = localStorage.getItem("token");
+                const response = await axiosSecure.get(
                     `${API_BASE_URL}/api/admin/mentorSessionLists/${id}`,
                     {
                         headers: {
@@ -38,8 +42,8 @@ const MentorSession = () => {
     useEffect(() => {
         const fetchSessions = async () => {
             try {
-                const token = localStorage.getItem("token");
-                const response = await axios.get(
+                // const token = localStorage.getItem("token");
+                const response = await axiosSecure.get(
                     `${API_BASE_URL}/api/admin/mentorSessionLists/${id}`,
                     {
                         headers: {

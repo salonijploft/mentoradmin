@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useParams} from "react-router-dom";
 import SidebarNav from "../sidebar";
 import Pagination from "../Pagination/Pagination";
 import PaymentDetails from "../CustomModals/PaymentDetails";
@@ -6,6 +7,8 @@ import { Tab, Tabs } from "react-bootstrap";
 import axios from "axios";
 import { API_BASE_URL } from "../../../Helper/apicall";
 require("../../../client/assets/css/custom.css");
+import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
+import Cookies from "js-cookie"
 
 const MentorSession = () => {
     const [key, setKey] = useState("completed");
@@ -13,20 +16,32 @@ const MentorSession = () => {
     const [sessionData, setSessionData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const token = Cookies.get("token")
+    const { id } = useParams();
 
     useEffect(() => {
-    const fetchsessions = async () => {
-        try {
-            const response = await axios.get(`${API_BASE_URL}/api/admin/menteeSessionLists/${id}`)
+        const fetchsessions = async () => {
+          try {
+            if (!id || !token) return;
+            const response = await axiosSecure.get(
+              `${API_BASE_URL}/api/admin/menteeSessionLists/${id}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
             setSessionData(response.data.data);
-        } catch(error) {
+          } catch (error) {
             setError("Failed to fetch session data");
-        } finally {
+          } finally {
             setLoading(false);
-        }
-    };
-    fetchsessions();
-  },[])
+          }
+        };
+      
+        fetchsessions();
+      }, [id, token]); // Add dependencies if they come from props, route, or state
+      
 
     return (
         <>
@@ -58,21 +73,16 @@ const MentorSession = () => {
                                 </div>
                             </div>
                         </div> */}
-
-
                         <div className="col-sm-12">
                             <Tabs id="booking-tabs" activeKey={key} onSelect={(k) => setKey(k)} className="mb-1  custom-tabs">
                                 <Tab eventKey="upcoming" title="Upcoming Sessions">
                                 </Tab>
-
                                 {/* <Tab eventKey="pending" title="Pending Sessions">
                                 </Tab> */}
-
                                 <Tab eventKey="completed" title="Completed Sessions">
                                 </Tab>
                                 <Tab eventKey="cancelled" title="Cancelled Sessions">
                                 </Tab>
-
                             </Tabs>
                             <div className="card">
                                 <div className="card-body">

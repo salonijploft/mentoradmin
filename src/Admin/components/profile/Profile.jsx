@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import * as Yup from "yup";
 import { ErrorMessage, Field, FieldArray, Formik } from "formik";
-// import FeatherIcon from "feather-icons-react";
 import SidebarNav from "../sidebar";
 import DatePicker from "react-datepicker";
 import { Link } from "react-router-dom";
@@ -12,7 +11,8 @@ import { toast } from "react-toastify";
 import { Spinner } from "react-bootstrap";
 import Loader from "../../components/Loader.js";
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-
+import Cookies from "js-cookie";
+import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance.js";
 
 const Profile = () => {
   const [userData, setUserData] = useState({
@@ -21,18 +21,19 @@ const Profile = () => {
     email: "",
     profileImage: ""
   });
+
+  const [profileUpdated, setProfileUpdated] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const token = localStorage.getItem("token");
   const [previewImage, setPreviewImage] = useState(""); // For instant preview
   const [selectedFile, setSelectedFile] = useState(null); // Holds selected file
   const [profileImage, setProfileImage] = useState(null);
   const [showPassword, setShowPassword] = useState({
-    oldPassword: false,
+    currentPassword: false,
     newPassword: false,
     confirmPassword: false
   });
-
+  const token = Cookies.get('token');
 
   const toggleVisibility = (field) => {
     setShowPassword((prev) => ({
@@ -40,16 +41,15 @@ const Profile = () => {
       [field]: !prev[field]
     }));
   };
-  // ✅ Validation Schema
+
   const profileFormSchema = Yup.object().shape({
     firstName: Yup.string().min(2, "Too short!").required("First name is required"),
     lastName: Yup.string().min(2, "Too short!").required("Last name is required"),
     email: Yup.string().email("Invalid email").required("Email is required"),
   });
 
-
   const passwordFormSchema = Yup.object().shape({
-    oldPassword: Yup.string()
+    currentPassword: Yup.string()
       .required("Old password is required"),
 
     newPassword: Yup.string()
@@ -60,60 +60,52 @@ const Profile = () => {
       .matches(/[0-9]/, "Must contain at least one number")
       .matches(/[^A-Za-z0-9]/, "Must contain at least one special character") // More inclusive
       .notOneOf([Yup.ref("oldPassword")], "New password cannot be the same as old password"),
-
     confirmPassword: Yup.string()
       .required("Confirm password is required")
       .oneOf([Yup.ref("newPassword"), null], "Passwords must match"),
   });
 
-
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-
     if (file && file.type.startsWith("image/")) {
       setSelectedFile(file);
-      // Show instant preview
       const imageUrl = URL.createObjectURL(file);
       setPreviewImage(imageUrl);
-      // setProfileImage(imageUrl);
     } else {
       toast.error("Please select a valid image file (JPG, PNG, etc.)");
     }
   };
 
-  // Fetch Profiledetail from API
-  useEffect(() => {
-    const profileDetail = async () => {
-      setLoading(true);
-      try {
-        const response = await axios.get(`${API_BASE_URL}/api/admin/profileDetail`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (response.data.status === 200) {
-          setUserData(response.data.data);
-
-          // Update profile image only if it exists
-          if (response.data.data.profileImage) {
-            const imageUrl = `${API_BASE_URL}/${response.data.data.profileImage}?t=${Date.now()}`;
-            setProfileImage(imageUrl);
-          }
-        } else {
-          console.error("Error fetching profile details:", response.data.message);
+  // Fetch Profile Detail from API
+  const fetchProfileDetail = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/profileDetail`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.data.status === 200) {
+        setUserData(response.data.data);
+        if (response.data.data.profileImage) {
+          const imageUrl = `${API_BASE_URL}/${response.data.data.profileImage}?t=${Date.now()}`; // Add timestamp to prevent caching
+          setPreviewImage(imageUrl);
+          setProfileUpdated(true); // Set profile updated to true
         }
-      } catch (error) {
-        console.error("API Error:", error);
-      } finally {
-        setLoading(false);
+      } else {
+        console.error("Error fetching profile details:", response.data.message);
       }
-    };
+    } catch (error) {
+      setLoading(false);
+      console.error("Update Error:", error.response ? error.response.data : error);
+      toast.error(error.response ? error.response.data.message : "An error occurred while updating the password.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    profileDetail();
-  }, [token]);
+  useEffect(() => {
+    fetchProfileDetail(); // Fetch profile details on component mount
+  }, [token]); // Only depend on token
 
-
-
-  // Handle form submission
   const handleProfileSubmit = async (formikValues) => {
     const formData = new FormData();
     // Only append image if selected
@@ -126,7 +118,7 @@ const Profile = () => {
 
     setLoading(true);
     try {
-      const response = await axios.post(
+      const response = await axiosSecure.post(
         `${API_BASE_URL}/api/admin/profileUpdate`,
         formData,
         {
@@ -139,13 +131,8 @@ const Profile = () => {
       setLoading(false);
       if (response.data.status === 200) {
         toast.success("Profile updated successfully!");
-        // Dispatch a custom event to notify the header
-        const event = new CustomEvent("profile-updated");
-        window.dispatchEvent(event);
-
-        const updatedImageUrl = `${API_BASE_URL}/${response.data.profileImage}?t=${Date.now()}`;
-        // Optionally update the profile image in the state
-        setProfileImage(updatedImageUrl);
+        // fetchProfileDetail(); // Fetch updated profile details immediately
+        window.location.href = "/admin/profile"
       } else {
         toast.error(response.data.message || "Profile update failed.");
       }
@@ -156,36 +143,57 @@ const Profile = () => {
     }
   };
 
-
   const handlePasswordSubmit = async (values, { resetForm }) => {
-
     if (values.newPassword !== values.confirmPassword) {
       toast.error("New Password and Confirm Password do not match.");
       return;
     }
+  
+    const token = Cookies.get('token');
+    if (!token) {
+      toast.error("Authentication token missing. Please log in again.");
+      return;
+    }
+  
+    setLoading(true);
+  
     try {
-      setLoading(true);
-      const response = await axios.post(
+      const payload = {
+        oldPassword: values.currentPassword, // Ensure this matches the server's expected field name
+        newPassword: values.newPassword,
+        confirmPassword: values.confirmPassword,
+      };
+  
+      console.log("Payload being sent:", payload);
+  
+      const response = await axiosSecure.post(
         `${API_BASE_URL}/api/admin/adminUpdatePassword`,
-        values,
+        payload,
         {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
       );
-      setLoading(false);
-
-      if (response.data.status === 201) {
-        toast.error(response.data.message);
-      } else if (response.data.status === 200) {
+  
+      console.log("Response from server:", response);
+  
+      if (response.data.status === 200) {
         toast.success("Password updated successfully!");
         resetForm();
       } else {
-        toast.error("Failed to update password.");
+        toast.error(response.data.message || "Failed to update password.");
       }
     } catch (error) {
-      setLoading(false);
       console.error("Update Error:", error);
-      toast.error("An error occurred while updating the password.");
+      if (error.response && error.response.data) {
+        toast.error(error.response.data.message || "An error occurred while updating the password.");
+      } else {
+        toast.error("An error occurred while updating the password.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -213,7 +221,7 @@ const Profile = () => {
                       <img
                         className="rounded-circle"
                         alt="User Image"
-                        src={previewImage || profileImage}
+                        src={previewImage || userData.profileImage || "/path/to/default/image.png"}
                         // src={previewImage || `${API_BASE_URL}/${profileImage}?t=${Date.now()}`}
                         style={{ cursor: "pointer" }}
                       />
@@ -222,13 +230,13 @@ const Profile = () => {
                       type="file"
                       id="profileImageInput"
                       accept="image/*"
-                      style={{ display: 'none' }} // Hide file input
+                      style={{ display: 'none' }}
                       onChange={handleImageChange}
                     />
                   </div>
                   <div className="col ml-md-n2 profile-user-info">
-                    <h4 className="user-name mb-0">{userData?.firstName || ""} {userData?.lastName || ""}</h4>
-                    <h6 className="text-muted">{userData?.email || ""} </h6>
+                    <h4 className="user-name mb-0">{userData.firstName} {userData.lastName}</h4>
+                    <h6 className="text-muted">{userData.email} </h6>
                   </div>
                 </div>
               </div>
@@ -290,7 +298,6 @@ const Profile = () => {
 
                       </div>
                       {/* Edit Details Modal */}
-
                     </div>
                     <div className="col-lg-12">
                       <div className="card">
@@ -300,7 +307,7 @@ const Profile = () => {
                             <div className="col-md-10 col-lg-6">
                               <Formik
                                 initialValues={{
-                                  oldPassword: '',
+                                  currentPassword: '',
                                   newPassword: '',
                                   confirmPassword: ''
                                 }}
@@ -309,67 +316,50 @@ const Profile = () => {
                               >
                                 {({ handleSubmit, values, touched, errors }) => (
                                   <form onSubmit={handleSubmit}>
-
-                                    {/* <div className="form-group">
-                                      <label>Old Password</label>
-                                      <Field
-                                        type={showPassword.oldPassword ? 'text' : 'password'}
-                                        name="oldPassword"
-                                        className={`form-control ${touched.oldPassword && errors.oldPassword ? "is-invalid" : ""}`}
-                                      />
-                                      <span
-                                        className="input-group-text"
-                                        style={{ cursor: 'pointer' }}
-                                        onClick={() => toggleVisibility('oldPassword')}
-                                      >
-                                        {showPassword.oldPassword ? <FaEyeSlash /> : <FaEye />}
-                                      </span>
-                                      <ErrorMessage name="password" component="div" className="text-danger" />
-                                    </div> */}
                                     <div className="form-group position-relative">
                                       <label>Old Password</label>
                                       <div className="input-group">
                                         <Field
-                                          type={showPassword.oldPassword ? 'text' : 'password'}
-                                          name="oldPassword"
-                                          className={`form-control ${touched.oldPassword && errors.oldPassword ? "is-invalid" : ""}`}
+                                          type={showPassword.currentPassword ? 'text' : 'password'}
+                                          name="currentPassword"
+                                          className={`form-control ${touched.currentPassword && errors.currentPassword ? "is-invalid" : ""}`}
                                         />
-                                          <span className="input-group-text" style={{ cursor: 'pointer' }} onClick={() => toggleVisibility('oldPassword')} >
-                                            {showPassword.oldPassword ? <FaEyeSlash /> : <FaEye />}
-                                          </span>
+                                        <span className="input-group-text" style={{ cursor: 'pointer' }} onClick={() => toggleVisibility('currentPassword')} >
+                                          {showPassword.currentPassword ? <FaEyeSlash /> : <FaEye />}
+                                        </span>
                                       </div>
-                                      <ErrorMessage name="oldPassword" component="div" className="text-danger" />
+                                      <ErrorMessage name="currentPassword" component="div" className="text-danger" />
                                     </div>
                                     <div className="form-group position-relative">
                                       <label>New Password</label>
-                                      <div className="input-group"> 
-                                      <Field
-                                        type={showPassword.newPassword ? "text" : "password"}
-                                        name="newPassword"
-                                        className={`form-control ${touched.newPassword && errors.newPassword ? "is-invalid" : ""}`}
-                                      />
-                                      <span className="input-group-text" style={{ cursor: 'pointer' }} onClick={() => toggleVisibility('newPassword')} >
-                                        {showPassword.newPassword ? <FaEyeSlash /> : <FaEye />}
-                                      </span>
-                                    </div>
+                                      <div className="input-group">
+                                        <Field
+                                          type={showPassword.newPassword ? "text" : "password"}
+                                          name="newPassword"
+                                          className={`form-control ${touched.newPassword && errors.newPassword ? "is-invalid" : ""}`}
+                                        />
+                                        <span className="input-group-text" style={{ cursor: 'pointer' }} onClick={() => toggleVisibility('newPassword')} >
+                                          {showPassword.newPassword ? <FaEyeSlash /> : <FaEye />}
+                                        </span>
+                                      </div>
                                       <ErrorMessage name="newPassword" component="div" className="text-danger" />
                                     </div>
                                     <div className="form-group position-relative">
                                       <label>Confirm Password</label>
-                                      <div className="input-group"> 
-                                      <Field
-                                        type={showPassword.confirmPassword ? "text" : "password"}
-                                        name="confirmPassword"
-                                        className={`form-control ${touched.confirmPassword && errors.confirmPassword ? "is-invalid" : ""}`}
-                                      />
-                                      <span
-                                        className="input-group-text"
-                                        style={{  cursor: "pointer" }}
-                                        onClick={() => toggleVisibility("confirmPassword")}
-                                      >
-                                        {showPassword.confirmPassword ? <FaEyeSlash /> : <FaEye />}
-                                      </span>
-                                      </ div> 
+                                      <div className="input-group">
+                                        <Field
+                                          type={showPassword.confirmPassword ? "text" : "password"}
+                                          name="confirmPassword"
+                                          className={`form-control ${touched.confirmPassword && errors.confirmPassword ? "is-invalid" : ""}`}
+                                        />
+                                        <span
+                                          className="input-group-text"
+                                          style={{ cursor: "pointer" }}
+                                          onClick={() => toggleVisibility("confirmPassword")}
+                                        >
+                                          {showPassword.confirmPassword ? <FaEyeSlash /> : <FaEye />}
+                                        </span>
+                                      </div>
                                       <ErrorMessage name="confirmPassword" component="div" className="text-danger" />
                                     </div>
                                     <button className="btn btn-primary" type="submit">

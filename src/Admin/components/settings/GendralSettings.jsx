@@ -12,18 +12,21 @@ import { API_BASE_URL } from "../../../Helper/apicall";
 import { toast } from 'react-toastify'; // Assuming you are using react-toastify
 import 'react-toastify/dist/ReactToastify.css';
 import { useParams } from 'react-router-dom';
-
+import Cookies from "js-cookie";
+import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
 
 const GendralSettings = ({ }) => {
   const { id } = useParams();
   const [show, setShow] = useState(false);
   const [selectedState, setSelectedState] = useState(null);
   const [selectedCountry, setSelectedCountry] = useState(null);
-  const token = localStorage.getItem("token");
+  const token = Cookies.get("token");
   const basicFormRef = useRef();
+  const [logoPreview, setLogoPreview] = useState("");
+  const [faviconPreview, setFaviconPreview] = useState("");
+  // const [imagePreview, setImagePreview] = useState(null);
 
   // 2. Function to manually trigger the first form submission
-
   const triggerBasicFormSubmit = () => {
     if (basicFormRef.current) {
       basicFormRef.current.handleSubmit();
@@ -34,13 +37,11 @@ const GendralSettings = ({ }) => {
   useEffect(() => {
     const fetchSettingDetails = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/admin/getSetting`, {
+        const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getSetting`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        console.log("response234234", response.data);
         if (response.data.status === 200) {
-          const settingData = response.data.data[0]; // Access the first item in the data array
-          console.log("settingData", settingData);
+          const settingData = response.data.data[0];
           setUserData({
             id: settingData.id || "",
             vat: settingData.vat || "",
@@ -53,17 +54,15 @@ const GendralSettings = ({ }) => {
             priceGeneralSession: settingData.priceGeneralSession || "",
             cancellationFees: settingData.cancellationFees || "",
             payoutThreshold: settingData.payoutThreshold || "",
-            mobileNo: settingData.mobileNo || "",
-            Email: settingData.Email || "",
+            logo: settingData.logo || "",
+            favicon: settingData.favicon || "",
             facebookLink: settingData.facebookLink || "",
             instagramLink: settingData.instagramLink || "",
             linkedInLink: settingData.linkedInLink || "",
             twitterLink: settingData.twitterLink || "",
             address: settingData.address || "",
-            createdBy: settingData.createdBy || "",
-            status: settingData.status || "",
-            createdAt: settingData.createdAt || "",
-            updatedAt: settingData.updatedAt || ""
+            mobileNo: settingData.mobileNo || "",
+            Email: settingData.Email || "",
           });
         }
       } catch (error) {
@@ -72,6 +71,38 @@ const GendralSettings = ({ }) => {
     };
     fetchSettingDetails();
   }, [id, token]);
+
+  // Update logo preview when userData changes
+  useEffect(() => {
+    if (userData?.logo) {
+      setLogoPreview(`${API_BASE_URL}/${userData.logo}`);
+    }
+    if (userData?.favicon) {
+      setFaviconPreview(`${API_BASE_URL}/${userData.favicon}`);
+    }
+  }, [userData]);
+
+  const handleLogoChange = (e, setFieldValue) => {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith("image/")) {
+      const previewUrl = URL.createObjectURL(file);
+      setLogoPreview(previewUrl); // Update the logo preview state
+      setFieldValue("logo", file); // Update Formik field value
+    } else {
+      toast.error("Please select a valid image file.");
+    }
+  };
+
+  const handleFaviconChange = (e, setFieldValue) => {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith("image/")) {
+      const previewUrl = URL.createObjectURL(file);
+      setFaviconPreview(previewUrl); // Update the favicon preview state
+      setFieldValue("favicon", file); // Update Formik field value
+    } else {
+      toast.error("Please select a valid image file.");
+    }
+  };
 
 
   const handleStateChange = (selectedOption) => {
@@ -84,38 +115,39 @@ const GendralSettings = ({ }) => {
 
   const handleSubmit = async (values, { setSubmitting, resetForm }) => {
     try {
-      const payload = {
-        vat: values.vat,
-        vatCommission: values.vatCommission,
-        whtNigerian: values.whtNigerian,
-        platformCommission: values.platformCommission,
-        priceThree: values.priceThree,
-        priceSix: values.priceSix,
-        priceGeneralSession: values.priceGeneralSession,
-        cancellationFees: values.cancellationFees,
-        payoutThreshold: values.payoutThreshold,
-      };
-      const response = await axios.post(`${API_BASE_URL}/api/admin/updateOrCreateSetting`, payload, {
+      // Create a FormData object to handle file uploads
+      const formData = new FormData();
+      formData.append('vat', values.vat);
+      formData.append('vatCommission', values.vatCommission);
+      formData.append('whtNigerian', values.whtNigerian);
+      formData.append('whtNonNigerian', values.whtNonNigerian); // Make sure to include this if it's part of your form
+      formData.append('platformCommission', values.platformCommission);
+      formData.append('priceThree', values.priceThree);
+      formData.append('priceSix', values.priceSix);
+      formData.append('priceGeneralSession', values.priceGeneralSession);
+      formData.append('cancellationFees', values.cancellationFees);
+      formData.append('payoutThreshold', values.payoutThreshold);
+
+      // Append the logo file if it exists
+      if (values.logo) {
+        formData.append('logo', values.logo);
+      }
+
+      const response = await axiosSecure.post(`${API_BASE_URL}/api/admin/updateOrCreateSetting`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
+          "Content-Type": "multipart/form-data" // Set the content type to multipart/form-data
         }
       });
 
-      // if (response.data.status === 200) {
-      //   toast.success("Basic details updated successfully!", { position: "top-right" });
-      //   resetForm(); // Reset form fields after successful submission
-      // } else {
-      //   toast.error("Failed to update Basic details!");
-      // }
       if (response.data.status === 200) {
         toast.success("Basic details updated successfully!", { position: "top-right" });
         setUserData((prev) => ({
           ...prev,
-          ...payload
+          ...values // Update userData with the new values
         }));
         resetForm();
-      }      
+      }
     } catch (error) {
       console.error("Error saving Basic details:", error);
       toast.error("An error occurred while saving Basic details.");
@@ -123,7 +155,6 @@ const GendralSettings = ({ }) => {
       setSubmitting(false);
     }
   };
-
 
   /// function to update the setting links
   const handleLinkSubmit = async (values, { setSubmitting, resetForm }) => {
@@ -138,7 +169,7 @@ const GendralSettings = ({ }) => {
         address: values.address
       };
 
-      const response = await axios.post(
+      const response = await axiosSecure.post(
         `${API_BASE_URL}/api/admin/updateOrCreateSettingLinks`,
         payload,
         {
@@ -148,15 +179,8 @@ const GendralSettings = ({ }) => {
           },
         }
       );
-
       console.log("Response Data:", response.data);
 
-      // if (response.data.status === 200) {
-      //   toast.success("Setting links updated successfully.");
-      //   resetForm();
-      // } else {
-      //   toast.error(`Error: ${response.data.message}`);
-      // }
       if (response.data.status === 200) {
         toast.success("Setting links updated successfully.");
         setUserData((prev) => ({
@@ -165,8 +189,8 @@ const GendralSettings = ({ }) => {
         }));
         resetForm();
       } else {
-          toast.error(`Error: ${response.data.message}`);
-        }
+        toast.error(`Error: ${response.data.message}`);
+      }
     } catch (error) {
       console.error("API Error:", error);
       toast.error("An error occurred while updating settings.");
@@ -177,13 +201,20 @@ const GendralSettings = ({ }) => {
 
   console.log("userdata", userData)
 
+  // /setting the logo image 
+  useEffect(() => {
+    if (userData?.logo && typeof userData.logo === "string") {
+      setLogoPreview(`${API_BASE_URL}/${userData.logo}`);
+    }
+  }, [userData?.logo]);
+
+  
+
+
   return (
     <>
       <div >
-        {/* Header */}
-        {/* Sidebar */}
         <SidebarNav />
-        {/* Page Wrapper */}
         <div className="page-wrapper">
           <div className="content container-fluid">
             <div className="">
@@ -213,14 +244,15 @@ const GendralSettings = ({ }) => {
                         priceSix: userData.priceSix || "",
                         priceGeneralSession: userData.priceGeneralSession || "",
                         cancellationFees: userData.cancellationFees || "",
-                        payoutThreshold: userData.payoutThreshold || ""
+                        payoutThreshold: userData.payoutThreshold || "",
+                        logo: userData.logo || "",
+                        favicon: userData.favicon || "",
                       }}
                       // validationSchema={basicDetails}
                       enableReinitialize={true}
                       onSubmit={handleSubmit}
                     >
-
-                      {({ errors, touched, handleSubmit }) => (
+                      {({ errors, touched, handleSubmit, setFieldValue }) => (
                         <form onSubmit={handleSubmit}>
                           <div className="settings-form">
                             {/* VAT % */}
@@ -302,7 +334,95 @@ const GendralSettings = ({ }) => {
                               <ErrorMessage name="payoutThreshold" component="div" className="text-danger" />
                             </div>
 
-                            {/* Buttons */}
+                            {/* Logo */}
+                            <div className="form-group">
+                              <label>Logo</label>
+                              <Field name="logo" type="file">
+                                {({ field, form }) => (
+                                  <div style={{ position: "relative", width: "100%" }}>
+                                    <input
+                                      type="file"
+                                      id="logoUpload"
+                                      style={{ display: "none" }}
+                                      onChange={(e) => handleLogoChange(e, setFieldValue)}
+                                    />
+                                    <label
+                                      htmlFor="logoUpload"
+                                      style={{
+                                        height: "60px",
+                                        border: "1px solid #ced4da",
+                                        borderRadius: "4px",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        padding: "0 10px",
+                                        cursor: "pointer",
+                                      }}
+                                    >
+                                      {/* Display logo preview or the logo from API */}
+                                      {logoPreview || userData.logo ? (
+                                        <img
+                                          src={logoPreview || `${API_BASE_URL}/${userData.logo}`}
+                                          alt="Logo Preview"
+                                          style={{
+                                            height: "30px",
+                                            width: "40px",
+                                            objectFit: "cover",
+                                            borderRadius: "4px",
+                                          }}
+                                        />
+                                      ) : (
+                                        <span style={{ color: "#6c757d" }}>Click to upload logo</span>
+                                      )}
+                                    </label>
+                                  </div>
+                                )}
+                              </Field>
+                            </div>
+
+                            <div className="form-group">
+                              <label>Favicon</label>
+                              <Field name="favicon" type="file">
+                                {({ field, form }) => (
+                                  <div style={{ position: "relative", width: "100%" }}>
+                                    <input
+                                      type="file"
+                                      id="faviconUpload"
+                                      style={{ display: "none" }}
+                                      onChange={(e) => handleFaviconChange(e, setFieldValue)} // Use the new function here
+                                    />
+                                    <label
+                                      htmlFor="faviconUpload"
+                                      style={{
+                                        height: "60px",
+                                        border: "1px solid #ced4da",
+                                        borderRadius: "4px",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        padding: "0 10px",
+                                        cursor: "pointer",
+                                      }}
+                                    >
+                                      {/* Display favicon preview or the favicon from API */}
+                                      {faviconPreview || userData.favicon ? (
+                                        <img
+                                          src={faviconPreview || `${API_BASE_URL}/${userData.favicon}`}
+                                          alt="Favicon Preview"
+                                          style={{
+                                            height: "25px",
+                                            width: "40px",
+                                            objectFit: "cover",
+                                            borderRadius: "4px",
+                                          }}
+                                        />
+                                      ) : (
+                                        <span style={{ color: "#6c757d" }}>Click to upload favicon</span>
+                                      )}
+                                    </label>
+                                  </div>
+                                )}
+                              </Field>
+                            </div>
+
                             <div className="form-group mb-0">
                               <div className="settings-btns">
                                 <button type="submit" className="btn btn-primary mx-2">
@@ -358,38 +478,23 @@ const GendralSettings = ({ }) => {
                             </div>
                             <h5 className="title">Address & Contact Details</h5>
 
-                             <div className="form-group">
-                              <label>Mobile No *</label>
-                              <Field type="text" name="mobileNo" className="form-control" placeholder="Enter Mobile No" />
-                            </div>
                             <div className="form-group">
                               <label>Address *</label>
                               <Field type="text" name="address" className="form-control" placeholder="Enter Address" />
                             </div>
                             <div className="form-group">
-                              <label>Email *</label>
-                              <Field type="text" name="Email" className="form-control" placeholder="Enter Email" />
-                            </div>  
-                            {/* <div className="form-group mt-3">
-                              <label>Address <span className="star-red">*</span></label>
-                              <Field type="text" name="address" className="form-control" placeholder="Enter Address" />
+                              <label>Mobile No *</label>
+                              <Field type="text" name="mobileNo" className="form-control" placeholder="Enter Mobile No" />
                             </div>
 
-                            {/* Mobile No */}
-                            {/* <div className="form-group">
-                              <label>Mobile No <span className="star-red">*</span></label>
-                              <Field type="text" name="mobileNo" className="form-control" placeholder="Enter Mobile No" />
-                            </div> */}
+                            <div className="form-group">
+                              <label>Email *</label>
+                              <Field type="text" name="Email" className="form-control" placeholder="Enter Email" />
+                            </div>
 
-                            {/* Email */}
-                            {/* <div className="form-group">
-                              <label>Email <span className="star-red">*</span></label>
-                              <Field type="text" name="email" className="form-control" placeholder="Enter Email" />
-                            </div> */}  
-
-                             <div className="form-group">
+                            <div className="form-group">
                               <button type="submit" className="btn btn-primary">Update</button>
-                             </div>
+                            </div>
                           </div>
                         </form>
                       )}
