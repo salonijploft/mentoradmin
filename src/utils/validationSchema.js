@@ -11,37 +11,35 @@ export const basicDetails = Yup.object().shape({
   whtNigerian: Yup.number().required("WHT For Nigerian is required"),
   whtNonNigerian: Yup.number().required("WHT For Non-Nigerian is required"),
   platformCommission: Yup.number().required("Platform Commission is required"),
-  bundlePrice3Months: Yup.number().required(
-    "Max Bundle Price (3 Months) is required"
-  ),
-  bundlePrice6Months: Yup.number().required(
-    "Max Bundle Price (6 Months) is required"
-  ),
-  generalSessionPrice: Yup.number().required(
-    "Max Bundle Price (1 General Session) is required"
-  ),
-  cancellationFees: Yup.number().required(
-    "Cancellation/Reschedule Fee is required"
-  ),
+  priceThree: Yup.number().required("Max Bundle Price (3 Months) is required"),
+  priceSix: Yup.number().required("Max Bundle Price (6 Months) is required"),
+  priceGeneralSession: Yup.number().required("Max Bundle Price (1 General Session) is required"),
+  cancellationFees: Yup.number().required("Cancellation/Reschedule Fee is required"),
   payoutThreshold: Yup.number().required("Payout Threshold is required"),
+  logo: Yup.mixed().required("Logo is required").test("fileType", "Only image files are allowed", (value) => {
+    return value && ["image/jpeg", "image/png", "image/jpg"].includes(value.type);
+  }),
+  favicon: Yup.mixed().required("Favicon is required").test("fileType", "Only image files are allowed", (value) => {
+    return value && ["image/jpeg", "image/png", "image/jpg"].includes(value.type);
+  })
 });
 
 export const addressSchema = Yup.object().shape({
-  facebook: Yup.string()
+  facebookLink: Yup.string()
     .url("Invalid URL")
     .required("Facebook Link is required"),
-  instagram: Yup.string()
+    instagramLink: Yup.string()
     .url("Invalid URL")
     .required("Instagram Link is required"),
-  linkedin: Yup.string()
+    linkedInLink: Yup.string()
     .url("Invalid URL")
     .required("LinkedIn Link is required"),
-  twitter: Yup.string().url("Invalid URL").required("Twitter Link is required"),
+    twitterLink: Yup.string().url("Invalid URL").required("Twitter Link is required"),
   address: Yup.string().required("Address is required"),
-  mobile: Yup.string()
+    mobileNo: Yup.string()
     .matches(/^\d+$/, "Must be a valid number")
     .required("Mobile No is required"),
-  email: Yup.string().email("Invalid email").required("Email is required"),
+    Email: Yup.string().email("Invalid email").required("Email is required"),
 });
 
 export const subadmin = Yup.object().shape({
@@ -49,7 +47,8 @@ export const subadmin = Yup.object().shape({
   lastName: Yup.string().required("Last Name is required"),
   email: Yup.string().email("Invalid email").required("Email is required"),
   password: Yup.string().required("Password is required"),
-  // image: Yup.string().required("Image is required ")
+  image: Yup.string().required("Image is required"),
+  status: Yup.string().required("Status is required")
 });
 
 // export const BlogSchma = Yup.object({
@@ -61,6 +60,7 @@ export const subadmin = Yup.object().shape({
 //       value ? value.size <= 5242880 : true
 //     ),
 // });
+
 export const BlogSchma = Yup.object({
   blogName: Yup.string().required("Blog name is required"),
   blogCategory: Yup.string().required("Please select a category"),

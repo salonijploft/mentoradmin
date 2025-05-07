@@ -22,11 +22,16 @@ const MentorDetail = () => {
     useEffect(() => {
         const fetchMentorsDetails = async () => {
             try {
-                const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/mentorDetails/${id}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
+                const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/mentorDetails/${id}`, 
+                //     {
+                //     headers: {
+                //         Authorization: `Bearer ${token}`,
+                //     },
+                //    }
+                {
+                    withCredentials: true,
+                }
+            );
                 console.log("ddddd", response.data.data)
                 setMentorData(response.data.data);
                 setLoading(false);

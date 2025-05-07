@@ -39,9 +39,14 @@ const AddBlog = () => {
   useEffect(() => {
     const fetchCategory = async () => {
       try {
-        const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getMenteeCategories`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getMenteeCategories`, 
+        //   {
+        //   headers: { Authorization: `Bearer ${token}` }
+        // }
+        {
+          withCredentials: true,
+        }
+      );
         if (response.data.status === 200) {
           setCategory(response.data.data);
         }
@@ -57,19 +62,26 @@ const AddBlog = () => {
     if (isEditMode) {
       const fetchBlogDetails = async () => {
         try {
-          const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/blogDetail/${id}`, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              Authorization: `Bearer ${token}`,
-            },
-          });
+          const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/blogDetail/${id}`, 
+          //   {
+          //   headers: {
+          //     "Content-Type": "multipart/form-data",
+          //     Authorization: `Bearer ${token}`,
+          //   },
+          // }
+          {
+            withCredentials: true,
+          }
+        );
           if (response.data.status === 200) {
             const blogData = response.data.data;
             const imageUrl = `${API_BASE_URL}/${blogData.image.replace(/\\/g, "/")}`;
             setUserData({
               ...blogData,
               blogName: blogData.name,
+              blogStatus: blogData.status === 1 ? "public" : "draft", 
               blogImage: imageUrl,
+              blogCategory: blogData.category.toString(),
             });
             setPreview(imageUrl);
           } else {
@@ -98,7 +110,7 @@ const AddBlog = () => {
     setPreview(null);
     document.getElementById("file-upload").value = "";
   };
-  
+
   // Handle form submission for creating a blog
   const handleSubmit = async (values, { resetForm }) => {
     setLoading(true);
@@ -111,12 +123,17 @@ const AddBlog = () => {
       if (values.blogImage) {
         formData.append("image", values.blogImage);
       }
-      const response = await axiosSecure.post(`${API_BASE_URL}/api/admin/createBlog`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axiosSecure.post(`${API_BASE_URL}/api/admin/createBlog`, formData, 
+      //   {
+      //   headers: {
+      //     "Content-Type": "multipart/form-data",
+      //     Authorization: `Bearer ${token}`,
+      //   },
+      // }
+      { 
+        withCredentials: true,
+      }
+    );
       console.log("res:", response.data.status)
       if (response.data.status === 200) {
         // resetForm();
@@ -134,6 +151,7 @@ const AddBlog = () => {
     }
   };
 
+
   // Handle form submission for updating a blog
   const handleUpdate = async (values, { resetForm }) => {
     setLoading(true);
@@ -142,18 +160,23 @@ const AddBlog = () => {
       formData.append("name", values.blogName);
       formData.append("category", values.blogCategory);
       // formData.append("status", values.blogStatus === "public" ? "1" : "0");
-      formData.append("status", values.blogStatus === "public" ? "1" : "0");
+      formData.append("status", values.blogStatus === 'public' ? "1" : "0");
       formData.append("description", editorData);
       if (values.blogImage && typeof values.blogImage !== "string") {
         formData.append("image", values.blogImage);
       }
-      const response = await axiosSecure.post(`${API_BASE_URL}/api/admin/updateBlog/${id}`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      console.log("response", response.data); 
+      const response = await axiosSecure.post(`${API_BASE_URL}/api/admin/updateBlog/${id}`, formData, 
+      //   {
+      //   headers: {
+      //     "Content-Type": "multipart/form-data",
+      //     Authorization: `Bearer ${token}`,
+      //   },
+      // }
+      { 
+        withCredentials: true,
+      }
+    );
+      console.log("response", response.data);
       console.log("blogvaluestatus:", values.blogStatus);
       if (response.data.status === 200) {
         toast.success("Blog updated successfully!");
@@ -171,6 +194,7 @@ const AddBlog = () => {
       setLoading(false);
     }
   };
+  console.log("userData.blogStatus", userData.blogStatus)
 
   return (
     <>
@@ -193,13 +217,12 @@ const AddBlog = () => {
                     initialValues={{
                       blogName: userData.blogName || "",
                       blogCategory: userData.blogCategory || "",
-                      blogImage: userData.blogImage || null, // Ensure the blogImage state is preserved
+                      blogImage: userData.blogImage || null,
                       description: userData.description || "",
-                      blogStatus: userData.blogStatus || "draft",
+                      blogStatus: userData.blogStatus  || "draft",
                     }}
                     validationSchema={validationSchema}
-                    onSubmit={isEditMode ? handleUpdate : handleSubmit}
-                  >
+                    onSubmit={isEditMode ? handleUpdate : handleSubmit}>
                     {({ setFieldValue, handleSubmit: formikSubmit, values, errors, touched }) => (
                       <Form onSubmit={formikSubmit}>
                         <div className="form-group">
@@ -249,7 +272,7 @@ const AddBlog = () => {
                           <label>Blog Category *</label>
                           <Field as="select" className="form-control" name="blogCategory">
                             <option value="">Select Category</option>
-                            {category.length > 0 ? (
+                            {/* {category.length > 0 ? (
                               category.map((cat) => (
                                 <option key={cat.id} value={cat.id}>
                                   {cat.categoryName}
@@ -257,7 +280,12 @@ const AddBlog = () => {
                               ))
                             ) : (
                               <option disabled>Loading categories...</option>
-                            )}
+                            )} */}
+                            {category.map((cat) => (
+                              <option key={cat.id} value={cat.id.toString()}>
+                                {cat.categoryName} {/* Display categoryName */}
+                              </option>
+                            ))}
                           </Field>
                           {touched.blogCategory && errors.blogCategory && (
                             <div className="text-danger">{errors.blogCategory}</div>
@@ -265,16 +293,6 @@ const AddBlog = () => {
                         </div>
                         <div className="form-group">
                           <label>Blog Description *</label>
-                          {/* <CKEditor
-                            editor={ClassicEditor}
-                            data={userData.description || ""}
-                            onChange={(event, editor) => {
-                              const data = editor.getData();
-                              setFieldValue("description", data);
-                              setEditorData(data);
-                              setUserData((prev) => ({ ...prev, description: data }));
-                            }}
-                          /> */}
                           <CKEditor
                             editor={ClassicEditor}
                             data={values.description} // Ensure it is taking value from Formik state
@@ -284,7 +302,6 @@ const AddBlog = () => {
                               setFieldValue("description", data);
                             }}
                           />
-
                           <ErrorMessage name="description" component="div" className="text-danger" />
                         </div>
                         <div className="form-group">
@@ -295,8 +312,7 @@ const AddBlog = () => {
                               type="radio"
                               name="blogStatus"
                               value="draft"
-                              onChange={() => setFieldValue("blogStatus", "draft")}
-                              checked={values.blogStatus === "draft"}
+                              checked={userData.blogStatus === "draft"} 
                             />
                             <label className="form-check-label">Draft</label>
                           </div>
@@ -306,16 +322,16 @@ const AddBlog = () => {
                               type="radio"
                               name="blogStatus"
                               value="public"
-                              onChange={() => setFieldValue("blogStatus", "public")}
-                              checked={values.blogStatus === "public"}
+                              checked={userData.blogStatus === "public"}
                             />
                             <label className="form-check-label">Publish</label>
                           </div>
                           <ErrorMessage name="blogStatus" component="div" className="text-danger" />
-                          <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
-                            {loading ? <Spinner animation="border" size="sm" /> : isEditMode ? "Update Blog" : "Create Blog"}
-                          </button>
                         </div>
+                        <ErrorMessage name="blogStatus" component="div" className="text-danger" />
+                        <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
+                          {loading ? <Spinner animation="border" size="sm" /> : isEditMode ? "Update Blog" : "Create Blog"}
+                        </button>
                       </Form>
                     )}
                   </Formik>

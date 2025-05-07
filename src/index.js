@@ -13,6 +13,8 @@ import "../src/admin/assets/css/feathericon.min.css";
 import "../node_modules/@fortawesome/fontawesome-free/css/fontawesome.min.css";
 import "../node_modules/@fortawesome/fontawesome-free/css/all.min.css";
 import "../node_modules/@fortawesome/fontawesome-free/css/fontawesome.css";
+import { AuthProvider } from "./context/AuthContext.js";
+
 
 if (window.location.pathname.includes("admin")) {
   require("./admin/assets/css/feathericon.min.css");
@@ -27,6 +29,8 @@ if (window.location.pathname.includes("admin")) {
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <>
+    <AuthProvider >
     <AppRouter />
+    </AuthProvider>
   </>
 );

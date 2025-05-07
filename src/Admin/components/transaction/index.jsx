@@ -1,13 +1,17 @@
 import React, { useState } from "react";
-
 import { itemRender, onShowSizeChange } from "../paginationfunction";
 import SidebarNav from "../sidebar";
 import { Link } from "react-router-dom";
 import Pagination from "../Pagination/Pagination";
 import PaymentDetails from "../CustomModals/PaymentDetails";
+import { useUser, useUset} from "../../../context/UserContext";
+import Loader from "../Loader";
 
 const Transaction = () => {
   const [showPayment, setShowPaymentPopup] = useState(false);
+  const { rolePermissions } = useUser();
+  const [loading, setLoading] = useState(false);
+  console.log("rolePemission for the Transaction module:", rolePermissions);
 
   const transactions = [
     {
@@ -76,9 +80,22 @@ const Transaction = () => {
     },
   ];
 
+///Permission to check function 
+const hasPermission = (moduleName, action) => {
+  const permission = rolePermissions.find(permission => permission.moduleName === 'Transaction');
+  console.log("moduleName for Transactions:", moduleName);
+  console.log("permissions for Transaction Module:", permission);
+  return permission ? permission[action] === 1 : false;
+};
+
+const hasReadPermission = (moduleName) => hasPermission(moduleName, 'isRead');
+const hasCreatePermission = (moduleName) => hasPermission(moduleName, 'isAdd');
+const hasUpdatePermission = (moduleName) => hasPermission(moduleName, 'isUpdate');
+const hasDeletePermission = (moduleName) => hasPermission(moduleName, 'isDelete');
 
   return (
     <>
+    {loading && <Loader />}
       <SidebarNav />
       <div className="page-wrapper">
         <div className="content container-fluid">
@@ -87,7 +104,6 @@ const Transaction = () => {
             <div className="row">
               <div className="col-sm-12">
                 <h3 className="page-title">Transactions</h3>
-
               </div>
             </div>
           </div>
@@ -159,13 +175,7 @@ const Transaction = () => {
                 </div>
               </div>
               <div className="d-flex justify-content-end mt-3">
-
-
-                <Pagination
-                  current={1}
-                  total={5}
-                  pagination={() => { }}
-                />
+                <Pagination current={1} total={5} pagination={() => { }} />
               </div>
             </div>
           </div>

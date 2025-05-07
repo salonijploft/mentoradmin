@@ -1,17 +1,17 @@
- import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
  import { MdDelete, MdEdit } from "react-icons/md";
  import { FaEye } from "react-icons/fa";
  import SidebarNav from "../sidebar";
  import { Link } from "react-router-dom";
  import axios from "axios";
  import { API_BASE_URL } from "../../../Helper/apicall";
- import { Spinner } from "react-bootstrap";
  import { ToastContainer, toast } from "react-toastify";
  import "react-toastify/dist/ReactToastify.css";
  import Swal from "sweetalert2";
  import Cookies from "js-cookie"; 
- import Pagination from "../Pagination/Pagination";
- import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
+import Pagination from "../Pagination/Pagination";
+import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
+import Loader from "../Loader.js";
 
  
  const Skills = () => {
@@ -90,6 +90,7 @@
 
    return (
      <>
+     {loading && <Loader />}
        <SidebarNav />
        <div className="page-wrapper">
          <div className="content container-fluid">
@@ -111,7 +112,7 @@
                  <div className="card-body">
                    {loading ? (
                      <div className="d-flex justify-content-center">
-                       <Spinner animation="border" />
+                       
                      </div>
                    ) : (
                      <div className="table-responsive custom-table">

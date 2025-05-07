@@ -6,12 +6,13 @@ import { Link } from "react-router-dom";
 import Pagination from "../Pagination/Pagination";
 import axios from "axios";
 import { API_BASE_URL } from "../../../Helper/apicall";
-import { Spinner } from "react-bootstrap";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Swal from "sweetalert2";
 import Cookies from "js-cookie"; 
 import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
+import {useUser} from "../../../context/UserContext";
+import Loader from "../Loader";
 
 const Blogs = () => {
   const [blog, setBlog] = useState([]);
@@ -23,13 +24,19 @@ const Blogs = () => {
   const [isDelete, setIsDelete] = useState(false);
   const [loading, setLoading] = useState(false); 
   // const token = Cookies.getItem("token");
+  const {rolePermissions} = useUser();
+  console.log("rolepermissions in the blogs:", rolePermissions);
 
   const fetchCategories = async () => {
     try {
       const token = Cookies.get('token');
-      const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getMenteeCategories`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getMenteeCategories`, 
+        // {
+        // headers: { Authorization: `Bearer ${token}` }, }
+        {
+          withCredentials: true,
+        }
+    );
       if (response.data.status === 200) {
         setCategories(response.data.data);
       }
@@ -37,16 +44,19 @@ const Blogs = () => {
       console.error("Error fetching categories:", error);
     }
   };
-  
+
   const fetchBlogList = async () => {
     setLoading(true); 
     try {
       const token = Cookies.get('token');
-      const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getBlogs?limit=${limit}&page=${page}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getBlogs?limit=${limit}&page=${page}`,
+        //  {
+        // headers: {
+        //   Authorization: `Bearer ${token}`,},}
+        {
+          withCredentials: true,
+        }
+    );
       if (response.data.status === 200) {
         setBlog(response.data.data);
         setCurrentPage(response.data.pagination.currentPage);
@@ -76,25 +86,48 @@ const Blogs = () => {
       cancelButtonColor: '#d33',
       confirmButtonText: 'Yes, delete it!'
     });
+    if (result.isConfirmed) { 
     try {
       const token = Cookies.get('token');
-      const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/deleteBlog/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/deleteBlog/${id}`,
+      //    {
+      //   headers: {
+      //     Authorization: `Bearer ${token}`,
+      //   },
+      // }
+      {
+        withCredentials: true,
+      }
+    );
       if (response.data.status === 200) {
-        setIsDelete(true);
+        setIsDelete(true); 
         toast.success("Blog deleted successfully!", { position: "top-right" });
       }
     } catch (error) {
       console.log("error", error);
-      toast.error("Failed to delete blog", { position: "top-right" });
+      toast.error("Failed to delete blog", { position: "top-right" });  
     }
+     } else {
+      toast.info("Delete action was canceled.", { position: "top-right" });
+        }
   };
+
+  //function to cal permissions 
+   const hasPermission = (moduleName, action) => {
+    console.log("moduleName in Bloglist:", moduleName);
+    const permission = rolePermissions.find(permission => permission.moduleName === 'Blogs') 
+    console.log("permission for bloglist:", permission);
+    return permission ? permission[action] === 1 : false;
+   }
+
+   const hasReadPermission = (moduleName) => hasPermission(moduleName, 'isRead');
+   const hasCreatePermission = (moduleName) => hasPermission(moduleName, 'isAdd');
+   const hasUpdatePermission = (moduleName) => hasPermission(moduleName, 'isUpdate');
+   const hasDeletePermission = (moduleName) => hasPermission(moduleName, 'isDelete');
 
   return (
     <>
+    {loading && <Loader />}
       <SidebarNav />
       <div className="page-wrapper">
         <div className="content container-fluid">
@@ -104,9 +137,11 @@ const Blogs = () => {
                 <h3 className="page-title">Blog List</h3>
               </div>
               <div className="col-sm-2 text-end">
+                {hasCreatePermission ('Blogs') && ( 
                 <Link to="/admin/add-blog">
                   <button className="btn btn-primary btn-lg">Create Blog</button>
                 </Link>
+                )}
               </div>
             </div>
           </div>
@@ -116,7 +151,7 @@ const Blogs = () => {
                 <div className="card-body">
                   {loading ? (
                     <div className="d-flex justify-content-center">
-                      <Spinner animation="border" />
+                    
                     </div>
                   ) : (
                     <div className="table-responsive custom-table">
@@ -144,10 +179,14 @@ const Blogs = () => {
                               <td>{item.status === 1 ? "Published" : "Draft"}</td>
                               <td>
                                 <div >
+                                  {hasUpdatePermission ('Blogs') && ( 
                                   <Link to={`/admin/edit-blog/${item.id}`} className="me-2">
                                     <MdEdit fontSize={"18px"} />
                                   </Link>
+                                  )}
+                                  {hasDeletePermission ('Blogs') && (
                                   <MdDelete fontSize={"18px"} className="text-danger delete-icon" onClick={() => deleteBlogHandler(item.id)} />
+                                )}
                                 </div>
                               </td>
                             </tr>

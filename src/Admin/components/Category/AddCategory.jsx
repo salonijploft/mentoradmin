@@ -10,7 +10,7 @@ import { useLocation, useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Cookies from "js-cookie";
-import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
+import { axiosSecure } from "../../../utils/axiosSecureInstance";
 
 const AddCategory = () => {
     const { id } = useParams();
@@ -18,8 +18,8 @@ const AddCategory = () => {
     const isEditMode = location.pathname.includes(`/admin/edit-category/`);
     const navigate = useNavigate();
     const token = Cookies.get('token');
-    
-    // State for category data
+    const [loading, setLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false); // State for submission loading
     const [categoryData, setCategoryData] = useState({
         categoryTitle: "",
         status: "Active",
@@ -30,9 +30,14 @@ const AddCategory = () => {
         if (isEditMode && id) {
             const fetchCategoryDetails = async () => {
                 try {
-                    const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/menteeCategoryDetail/${id}`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
+                    const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/menteeCategoryDetail/${id}`,
+                    //      {
+                    //     headers: { Authorization: `Bearer ${token}` }
+                    //    }
+                    {
+                        withCredentials: true,
+                    }
+                );
                     if (response.data.status === 200) {
                         const { categoryName, status } = response.data.data;
                         setCategoryData({
@@ -45,15 +50,23 @@ const AddCategory = () => {
                 } catch (error) {
                     console.error("API Error:", error);
                     toast.error("Something went wrong while fetching category details.");
+                } finally {
+                    setLoading(false); // Stop loading after fetching
+                    setTimeout(() => {
+                        setIsSubmitting(false); // Stop loader after submission
+                    }, 2000);
                 }
             };
             fetchCategoryDetails();
+        } else {
+            setLoading(false); // Stop loading if not in edit mode
         }
     }, [isEditMode, id, token]);
 
     // Handle Form Submission for both Create & Update
     const handleSubmit = async (values, { resetForm }) => {
         try {
+            setIsSubmitting(true); // Start loader for submission
             const payload = {
                 categoryName: values.categoryTitle,
                 status: values.status === "Active" ? 1 : 0,
@@ -61,16 +74,25 @@ const AddCategory = () => {
             let response;
             if (isEditMode) {
                 // Update existing category
-                response = await axiosSecure.post(`${API_BASE_URL}/api/admin/updateMenteeCategory/${id}`, payload, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
+                response = await axiosSecure.post(`${API_BASE_URL}/api/admin/updateMenteeCategory/${id}`, payload, 
+                //     {
+                //     headers: { Authorization: `Bearer ${token}` },
+                // }
+                {
+                withCredentials: true,
+                }
+            );
             } else {
                 // Create new category
-                response = await axiosSecure.post(`${API_BASE_URL}/api/admin/createMenteeCategory`, payload, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
+                response = await axiosSecure.post(`${API_BASE_URL}/api/admin/createMenteeCategory`, payload, 
+                // {
+                //     headers: { Authorization: `Bearer ${token}` },
+                // }
+                {
+                    withCredentials: true,
+                }
+              );
             }
-
             if (response.data.status === 200) {
                 toast.success(isEditMode ? "Category Updated Successfully!" : "Category Added Successfully!", { position: "top-right" });
                 resetForm();
@@ -81,9 +103,10 @@ const AddCategory = () => {
         } catch (error) {
             console.error("API Error:", error);
             toast.error("Something went wrong!");
+        } finally {
+            setIsSubmitting(false); // Stop loader after submission
         }
     };
-
 
     const handleBack = () => {
         navigate(-1); // this goes back to the previous page
@@ -91,6 +114,8 @@ const AddCategory = () => {
 
     return (
         <>
+            {loading && <Loader />} {/* Show loader while loading category details */}
+            {isSubmitting && <Loader />} {/* Show loader while submitting the form */}
             <SidebarNav />
             {/* Page Wrapper */}
             <div className="page-wrapper">
@@ -144,7 +169,6 @@ const AddCategory = () => {
 
                                                     {/* Submit Button */}
                                                     <div className="m-t-20 text-center">
-
                                                         <div className="d-flex justify-content-between">
                                                             <button
                                                                 type="button"
@@ -157,6 +181,7 @@ const AddCategory = () => {
                                                             <button type="submit" className="btn btn-primary btn-lg">
                                                                 {isEditMode ? "Update Category" : "Create Category"}
                                                             </button>
+
                                                         </div>
                                                     </div>
                                                 </Form>

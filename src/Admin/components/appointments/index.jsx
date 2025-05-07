@@ -2,9 +2,14 @@ import React, { useState } from "react";
 import SidebarNav from "../sidebar";
 import Pagination from "../Pagination/Pagination";
 import BookingDetails from "./BookingDetails";
+import { useUser } from "../../../context/UserContext";
 
 const Bookings = () => {
   const [show, setShow] = useState(false);
+  const { rolePermissions } = useUser();
+  console.log("rolePermissions in the BookingList module ", rolePermissions);
+  
+  
   const [data, setData] = useState([
     {
       id: 1,
@@ -67,6 +72,21 @@ const Bookings = () => {
     setFilters({ SessionTrack: "", MentorName: "", MenteeName: "" });
   };
 
+
+  
+   // Permission Check Function
+ const hasPermission = (moduleName, action) => {
+  const permission = rolePermissions.find(permission => permission.moduleName === 'Booking List');
+  console.log("moduleName for appointments:", moduleName);
+  console.log("permissions for Booking List Module:", permission);
+  return permission ? permission[action] === 1 : false;
+};
+
+const hasReadPermission = (moduleName) => hasPermission(moduleName, 'isRead');
+const hasCreatePermission = (moduleName) => hasPermission(moduleName, 'isCreate');
+const hasUpdatePermission = (moduleName) => hasPermission(moduleName, 'isUpdate');
+const hasDeletePermission = (moduleName) => hasPermission(moduleName, 'isDelete');
+
   return (
     <>
       <SidebarNav />
@@ -81,6 +101,7 @@ const Bookings = () => {
           </div>
           <div className="row mb-3">
             <div className="col-md-3 mb-2">
+              {hasReadPermission ('Booking List') && ( 
               <input
                 type="text"
                 className="form-control"
@@ -89,8 +110,10 @@ const Bookings = () => {
                 value={filters.SessionTrack}
                 onChange={handleFilterChange}
               />
+             )}
             </div>
-            <div className="col-md-3 mb-2 ">
+            <div className="col-md-3 mb-2 "> 
+              {hasReadPermission ('Booking List') && ( 
               <input
                 type="text"
                 className="form-control"
@@ -99,8 +122,10 @@ const Bookings = () => {
                 value={filters.MentorName}
                 onChange={handleFilterChange}
               />
+              )}
             </div>
             <div className="col-md-3 mb-2">
+            {hasReadPermission ('Booking List') && ( 
               <input
                 type="text"
                 className="form-control"
@@ -108,11 +133,18 @@ const Bookings = () => {
                 name="MenteeName"
                 value={filters.MenteeName}
                 onChange={handleFilterChange}
-              />
+              /> 
+            )}
             </div>
+
             <div className="col-md-3 d-flex gap-2">
+            {hasReadPermission ('Booking List') && ( 
               <button className="btn btn-primary h-75" onClick={() => { }}>Search</button>
+              )}
+
+             {hasReadPermission ('Booking List') && ( 
               <button className="btn btn-secondary" onClick={resetFilters}>Reset</button>
+              )}
             </div>
           </div>
           <div className="row">
@@ -158,9 +190,10 @@ const Bookings = () => {
                               <small>{record.time}</small>
                             </td>
                             <td>
+                         
                               <button className="btn btn-primary" onClick={() => {
                                 setShow(true);
-                              }}> View</button>
+                              }}> View</button> 
                             </td>
 
                           </tr>

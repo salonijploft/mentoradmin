@@ -36,9 +36,14 @@ const Faq = () => {
   useEffect(() => {
     const fetchCategory = async () => {
       try {
-        const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getMenteeCategories`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getMenteeCategories`,
+        //      {
+        //   headers: { Authorization: `Bearer ${token}` }
+        // }
+        {
+            withCredentials: true,
+        }
+    );
         if (response.data.status === 200) {
           setCategory(response.data.data);
         }
@@ -59,10 +64,13 @@ const Faq = () => {
             };
             const response = await axiosSecure.post(`${API_BASE_URL}/api/admin/createFaq`,
                 payload,
+                // {
+                //     headers: {
+                //         Authorization: `Bearer ${token}`, // Include token in headers
+                //     }
+                // }
                 {
-                    headers: {
-                        Authorization: `Bearer ${token}`, // Include token in headers
-                    }
+                     withCredentials: true,
                 }
             );
             console.log("res:", response.data)

@@ -18,7 +18,7 @@ import BlogDetails from "./components/Blog/blogdetails";
 import AddBlog from "./components/Blog/addblog";
 import PendingBlog from "./components/Blog/pendingblog";
 import Profile from "./components/profile/Profile";
-import Login from "./components/login";
+import Login from "./components/login/index.jsx";
 import Register from "./components/register";
 import ForgotPassword from "./components/forgotpassword";
 import ResetPassword from "./components/forgotpassword/ResetPassword";
@@ -51,20 +51,20 @@ import GoalList from "./components/AreaOfGoals/GoalList";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ProtectedRoute from "../utils/ProtectedRoute";
-import { AuthProvider } from "./components/AuthContext.js";
+import { AuthProvider } from "../../src/context/AuthContext.js";
 import Addskills from "./components/Skills/addskills.jsx";
 import AddAudience from "./components/Audience/addaudience.jsx";
 import Audience from "./components/Audience/audience.jsx";
 import Skills from "./components/Skills/skillss.jsx";
-import { PermissionsProvider } from "./components/context/PermissionsProvider.js";
-import { UserProvider } from "./components/context/UserContext.js";
+import { PermissionsProvider } from "../context/PermissionsProvider.js";
+import { UserProvider } from "../context/UserContext.js";
 
 const AppUniversal = function () {
   const [menu, setMenu] = useState(false);
   const toggleMobileMenu = () => {setMenu(!menu);};
   const { isAuth, setIsAuth } = useContext(Appcontext);
   const location = window?.location;
-  console.log("location", location?.pathname);
+  console.log("location", location?.pathname)
  
  // Determine if the header should be shown based on the current route
  useEffect(() => {
@@ -116,8 +116,7 @@ const showHeader = useMemo(() => {
        {showHeader && <Header onMenuClick={toggleMobileMenu} />}
         <Routes>
           <Route path="/admin/register" element={<Register />} />
-          <Route path="/admin/forgotPassword" element={<ForgotPassword />} />
-          
+          <Route path="/admin/forgotPassword" element={<ForgotPassword />} />  
           <Route  path="/admin/resetPassword" element={<ResetPassword />}  />    
           <Route path="/admin/login" element={<Login />} />
 
@@ -130,7 +129,6 @@ const showHeader = useMemo(() => {
 
             <Route path="/admin" element={<Dashboard />} />
             <Route path="/admin/booking-list" element={<Appointments />} />
-
             <Route path="/admin/refund-requests" element={<RefundRequests />} />
 
             <Route path="/admin/wht-list" element={<WhtRequests />}/>
@@ -145,6 +143,7 @@ const showHeader = useMemo(() => {
             <Route path="/admin/add-blog" element={<AddBlog />} />
             <Route path="/admin/edit-blog/:id" element={<AddBlog />} />
             <Route path="/admin/pending-blog" element={<PendingBlog />} />
+
             {/* New Routes  */}
             <Route path="/admin/audience" element={<Audience />}/>
             <Route path="/admin/addaudience" element={<AddAudience />} />
@@ -159,7 +158,7 @@ const showHeader = useMemo(() => {
             <Route path="/admin/mentee-list" element={<Mentee />} />
             <Route path="/admin/deleted-mentees" element={<Mentee />} />
             <Route path="/admin/mentee-detail/:id" element={<MenteeDetail />} />
-              
+    
             <Route path="/admin/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/admin/termsConditions" element={<TermsConditions />} />
             <Route path="/admin/about-us" element={<AboutUs />} />
@@ -190,7 +189,6 @@ const showHeader = useMemo(() => {
         </Routes>
       </div>
     </>
-   
     </AuthProvider>
     </PermissionsProvider>
     </UserProvider>

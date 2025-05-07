@@ -10,16 +10,17 @@ import { API_BASE_URL } from "../../../Helper/apicall";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { Spinner } from "react-bootstrap";
 import { Button, Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
-import Cookies from "js-cookie"; 
+import Cookies from "js-cookie";
 import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
+import { useUser } from "../../../context/UserContext.js";
+import  Loader  from "../Loader.js";
 
 const Mentor = () => {
   const [status, setStatus] = useState(false);
   const [mentors, setMentors] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({ MentorName: "" });
   const [showModal, setShowModal] = useState(false);
   const [selectedMentor, setSelectedMentor] = useState(null);
@@ -28,8 +29,9 @@ const Mentor = () => {
   const [totalPage, setTotalPages] = useState(1);
   const [limit, setLimit] = useState(10);
   const location = useLocation();
-
- const token = Cookies.get('token');
+  const { rolePermissions } = useUser();
+  console.log("rolePermissions in the mentor module ", rolePermissions);
+  const token = Cookies.get('token');
 
   // Define mapping of routes to verifyStatus
   const routeStatusMap = {
@@ -39,21 +41,22 @@ const Mentor = () => {
     "/admin/deleted-mentors": 3,
   };
   const verifyStatus = routeStatusMap[location.pathname] ?? 0;
-
   // Fetch Mentors
   const fetchMentors = async () => {
-    setLoading(true);
+   setLoading(true);
     try {
       if (!token) {
         throw new Error("Authorization token is missing!");
       }
       const searchParam = filters.MentorName ? `&search=${filters.MentorName}` : "";
       const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getMentors?verifyStatus=${verifyStatus}&limit=${limit}&page=${currentPage}${searchParam}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });  
+        // headers: {
+        //   Authorization: `Bearer ${token}`,
+        //   "Content-Type": "application/json",
+        // },
+        withCredentials: true,
+      }
+    );
       if (response.data.status === 200) {
         setMentors(response.data.data);
         setCurrentPage(response.data.pagination.currentPage);
@@ -65,7 +68,6 @@ const Mentor = () => {
       setLoading(false);
     }
   };
-
 
   // Fetch Mentors when page loads and when filters change
   useEffect(() => {
@@ -100,14 +102,16 @@ const Mentor = () => {
       const response = await axiosSecure.post(
         `${API_BASE_URL}/api/admin/accountStatusUpdate`,
         { id: mentorId, status: newStatus },
+        // {
+        //   headers: {
+        //     Authorization: `Bearer ${token}`,
+        //     "Content-Type": "application/json",
+        //   },
+        // }
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+          withCredentials: true,
         }
       );
-
       if (response.data.status === 200) {
         toast.success("Mentor status updated successfully!", { position: "top-right" });
         setMentors((prevMentors) =>
@@ -122,27 +126,29 @@ const Mentor = () => {
       console.error("Error updating mentor status:", error);
     }
   };
-  
+
   const handleVerify = async (mentorId, newStatus, rejectionReason = "") => {
     if ((newStatus === 2 || newStatus === 3) && !rejectionReason) {
       setSelectedMentor({ id: mentorId, status: newStatus });
       setShowModal(true);
       return;
     }
-
     try {
       const response = await axiosSecure.post(
         `${API_BASE_URL}/api/admin/verifyStatusUpdate`,
         {
           verifyStatus: newStatus,
           id: mentorId,
-          rejectedReason: rejectionReason, 
+          rejectedReason: rejectionReason,
         },
+        // {
+        //   headers: {
+        //     Authorization: `Bearer ${token}`,
+        //     "Content-Type": "application/json",
+        //   },
+        // }
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+          withCredentials: true,
         }
       );
       if (response.status === 200) {
@@ -155,7 +161,6 @@ const Mentor = () => {
       console.error("Error updating mentor verify status:", error);
     }
   };
-  
 
   const handleSubmit = () => {
     if (selectedMentor) {
@@ -177,11 +182,16 @@ const Mentor = () => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/mentorDelete/${mentorId}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
+          const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/mentorDelete/${mentorId}`, 
+          //   {
+          //   headers: {
+          //     Authorization: `Bearer ${token}`,
+          //   },
+          // }
+          {
+            withCredentials: true,
+          }
+        );
           if (response.status === 200) {
             toast.success("Mentor deleted successfully!");
             setMentors((prevMentors) => prevMentors.filter((mentor) => mentor.id !== mentorId));
@@ -202,8 +212,21 @@ const Mentor = () => {
     }
   };
 
+  //   Permission Check Function
+  const hasPermission = (moduleName, action) => {
+    const permission = rolePermissions.find(permission => permission.moduleName === 'Mentor');
+    console.log("permissions for MentorModule:", permission);
+    return permission ? permission[action] === 1 : false;
+  };
+
+  const hasReadPermission = (moduleName) => hasPermission(moduleName, 'isRead');
+  const hasCreatePermission = (moduleName) => hasPermission(moduleName, 'isCreate');
+  const hasUpdatePermission = (moduleName) => hasPermission(moduleName, 'isUpdate');
+  const hasDeletePermission = (moduleName) => hasPermission(moduleName, 'isDelete');
+
   return (
     <>
+    {loading && <Loader />}
       <SidebarNav />
       <div className="page-wrapper">
         <div className="content container-fluid">
@@ -212,28 +235,36 @@ const Mentor = () => {
               <h3 className="page-title">Mentor List </h3>
             </div>
           </div>
+
           <div className="row">
-            <div className="col-sm-12">
-              <div className="row mb-3">
-                <div className="col-md-3 mb-2">
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Search by Mentor Name"
-                    name="MentorName"
-                    value={filters.MentorName}
-                    onChange={handleFilterChange}
-                  />
+            <div className="col-sm-12"> 
+                <div className="row mb-3">
+                {hasReadPermission('Mentor') && (
+                  <div className="col-md-3 mb-2">
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Search by Mentor Name"
+                      name="MentorName"
+                      value={filters.MentorName}
+                      onChange={handleFilterChange}
+                    />
+                  </div>
+                )}
+                  <div className="col-md-3 d-flex gap-2">
+                    {hasReadPermission('Mentor') && (
+                      <button className="btn-primary-new" onClick={handleSearch}>
+                        Search
+                      </button>
+                    )}
+                    {hasReadPermission('Mentor') && (
+                      <button className="btn btn-secondary" onClick={resetFilters}>
+                        Reset
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div className="col-md-3 d-flex gap-2">
-                  <button className="btn-primary-new" onClick={handleSearch}>
-                    Search
-                  </button>
-                  <button className="btn btn-secondary" onClick={resetFilters}>
-                    Reset
-                  </button>
-                </div>
-              </div>
+
               <div className="card">
                 <div className="card-body">
                   <div className="table-responsive custom -table">
@@ -246,8 +277,9 @@ const Mentor = () => {
                           <th>Earned</th>
                           <th>Account Status</th>
                           <th>Mentorship Tracks</th>
-                          {verifyStatus === 0 && <th>Verify Status</th>}
-                          {verifyStatus === 2 && (
+                          {hasUpdatePermission('Mentor') && verifyStatus === 0 && <th>Verify Status</th>}
+                          {hasUpdatePermission('Mentor') && verifyStatus === 0 && <th>Verify Status</th>}
+                          {hasUpdatePermission('Mentor') && verifyStatus === 2 && (
                             <>
                               <th>Rejected Status</th>
                               <th>Rejected Reason</th>
@@ -261,7 +293,7 @@ const Mentor = () => {
                         {loading ? (
                           <tr>
                             <td colSpan="8" className="text-center">
-                              <Spinner height={50} width={50} color="#4fa94d" />
+                           
                             </td>
                           </tr>
                         ) : mentors.length === 0 ? (
@@ -285,8 +317,8 @@ const Mentor = () => {
                                   <Link to="#">{mentor.firstName} {mentor.lastName}</Link> <br />
                                   <span>{mentor.email}</span>
                                 </div>
-                              </td>    
-                                 <td>{mentor.isSubscribeEmail === "1" ? "Yes" : "No"}</td>
+                              </td>
+                              <td>{mentor.isSubscribeEmail === "1" ? "Yes" : "No"}</td>
                               <td>
                                 <span className="user-name">{mentor.tinNumber || "N/A"}</span>
                               </td>
@@ -298,28 +330,28 @@ const Mentor = () => {
                                     className="check"
                                     type="checkbox"
                                     checked={mentor.status === 1}
-                                    onChange={() => handleToggleStatus(mentor.id, mentor.status)}
+                                    onChange={() => hasUpdatePermission('Mentor') && handleToggleStatus(mentor.id, mentor.status)}
                                   />
                                   <label htmlFor={`rating${mentor.id}`} className="checktoggle checkbox-bg">
                                     Toggle
                                   </label>
                                 </div>
                               </td>
-                              <td>
+                              <td>{hasReadPermission('Mentor') && (
                                 <Link to={`/admin/mentor-tracks/${mentor.id}`}>
-                                  <button className="btn btn-primary">View</button>
+                                  <button className="btn btn-primary" disabled={!hasReadPermission('Mentor')}>View</button>
                                 </Link>
+                              )}
                               </td>
                               {(mentor.verifyStatus === 0) ? (
                                 <td>
                                   <select value={mentor.verifyStatus}
-                                    onChange={(e) => handleVerify(mentor.id, parseInt(e.target.value))}
+                                    onChange={(e) => hasUpdatePermission('Mentor') && handleVerify(mentor.id, parseInt(e.target.value))}
                                     className="form-select"
                                   >
                                     <option value="0">Pending</option>
                                     <option value="1">Approved</option>
-                                    <option value="2"> Reject</option>
-                                    {/* <option value="3">Hard Reject</option> */}
+                                    <option value="2">Reject</option>
                                   </select>
                                 </td>
                               ) : (mentor.verifyStatus === 2) ? (
@@ -331,24 +363,28 @@ const Mentor = () => {
                               <td>{mentor.lastLoginDate || "-"}</td>
                               <td>
                                 <div className="d-flex gap-2">
-                                  <Link to={`/admin/mentor-detail/${mentor.id}`}>
-                                    <FaEye fontSize={"18px"} />
-                                  </Link>
-                                  {verifyStatus !== 3 && (
+                                  {hasReadPermission('Mentor') && (
+                                    <Link to={`/admin/mentor-detail/${mentor.id}`}>
+                                      <FaEye fontSize={"18px"} />
+                                    </Link>
+                                  )}
+                                  {hasDeletePermission('Mentor') && verifyStatus !== 3 && (
                                     <MdDelete fontSize={"18px"} className="text-danger delete-icon mt-1"
                                       onClick={() => handleDelete(mentor.id)}
                                     />
                                   )}
                                   {verifyStatus !== 3 && (
                                     <>
-                                      {verifyStatus === 1 && (
+                                      {hasUpdatePermission('Mentor') && verifyStatus === 1 && (
                                         <Link to={`/admin/mentor-wallet/${mentor.id}`}>
                                           <FaWallet fontSize={"18px"} />
                                         </Link>
                                       )}
-                                      <Link to={`/admin/mentor-sessions/${mentor.id}`}>
-                                        <button className="btn btn-primary">Sessions</button>
-                                      </Link>
+                                      {hasReadPermission('Mentor') && (
+                                        <Link to={`/admin/mentor-sessions/${mentor.id}`}>
+                                          <button className="btn btn-primary" disabled={!hasReadPermission('Mentor')}>Sessions</button>
+                                        </Link>
+                                      )}
                                     </>
                                   )}
                                 </div>
@@ -387,9 +423,7 @@ const Mentor = () => {
                     </Modal>
                   </div>
                   <div className="d-flex justify-content-end mt-3">
-                    <Pagination
-                      current={currentPage}
-                      total={totalPage}
+                    <Pagination current={currentPage} total={totalPage}
                       pagination={(page) => {
                         setCurrentPage(page); // Update currentPage state
                       }}

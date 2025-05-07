@@ -41,16 +41,12 @@ const PayoutRequests = () => {
     ];
 
 
-
-
     return (
         <>
             <SidebarNav />
             <div className="page-wrapper">
                 <div className="content container-fluid">
                     <h2 className="text-2xl font-semibold mb-4">Payout Requests</h2>
-
-
                     <div className="row">
                         <div className="col-sm-12">
                             <div className="card">

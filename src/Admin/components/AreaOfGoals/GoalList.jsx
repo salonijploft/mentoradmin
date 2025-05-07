@@ -8,9 +8,10 @@ import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Swal from "sweetalert2";
-import { Spinner } from "react-bootstrap"; 
 import Cookies from "js-cookie"; 
 import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
+import { useUser  } from "../../../context/UserContext.js";
+import Loader from "../Loader.js";
 
 const GoalList = () => { 
     const [goals, setGoals] = useState([]);
@@ -20,7 +21,10 @@ const GoalList = () => {
     const [page, setPage] = useState(1);
     const [loading, setLoading] = useState(true); // New state for loader
     const navigate = useNavigate();
-    const token = Cookies.get('token');       
+    const token = Cookies.get('token');   
+    const { rolePermissions } = useUser();
+    console.log("role Permissions in the GoalList:", rolePermissions);    
+
 
     const fetchData = async () => {
         setLoading(true); // Start loading
@@ -29,13 +33,18 @@ const GoalList = () => {
             navigate("/login"); // Redirect if token is missing
             return;
         }
+        
         try {
-            const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getMenteeGoals?limit=${limit}&page=${page}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                },
-            });
+            const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getMenteeGoals?limit=${limit}&page=${page}`,
+                //  {
+                // headers: {
+                //     Authorization: `Bearer ${token}`,
+                //     "Content-Type": "application/json"
+                // },}
+                {
+                    withCredentials: true,
+                }
+        );
             console.log("Response Data:", response.data.pagination.currentPage); 
             if (response.data.status === 200) {
                 setGoals(response.data.data); // Ensure goals is an array
@@ -54,7 +63,7 @@ const GoalList = () => {
             }
             if (error.response?.status === 401) {
                 console.error("Unauthorized access. Redirecting to login.");
-                navigate("/login"); // Redirect to login if unauthorized
+                navigate("/login"); 
             }
         } finally {
             setLoading(false); // Stop loading
@@ -83,12 +92,16 @@ const GoalList = () => {
             cancelButtonColor: '#3085d6',
             confirmButtonText: 'Yes, delete it!'
         });
-
         if (result.isConfirmed) {
             try {
-                const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/deleteMenteeGoal/${id}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/deleteMenteeGoal/${id}`, 
+                //     {
+                //     headers: { Authorization: `Bearer ${token}` }
+                // }
+                {
+                    withCredentials: true,
+                }
+            );
                 console.log("Delete API response:", response);
                 if (response.data.status === 200) {
                     setGoals(goals.filter(goal => goal.id !== id));
@@ -100,11 +113,26 @@ const GoalList = () => {
                 console.error("Error deleting goal:", error);
                 toast.error("Failed to delete goal.", { position: "top-right" });
             }
+       } else {
+             toast.info("Delete action was canceled.", { position: "top-right" });
         }
     };
 
-    return (
+    // functions to chcek the Permissons
+    const hasPermission = ( moduleName, action) => {
+        const permission = rolePermissions.find(permission => permission.moduleName === 'Mentorship Goals');
+        console.log("modeulename in goalList :", moduleName);
+        console.log("rolepermissions in the GoalList module:", permission);
+        return permission ? permission[action] === 1 : false;
+    };
+     const hasReadPermission = (moduleName) => hasPermission(moduleName, 'isRead');
+     const hasCreatePermission = (moduleName) => hasPermission(moduleName, 'isAdd');
+     const hasUpdatePermission = (moduleName) => hasPermission(moduleName, 'isUpdate');
+     const hasDeletePermission = (moduleName) => hasPermission(moduleName, 'isDelete');
+
+     return (
         <>
+       {loading && <Loader />}
             <SidebarNav />
             <div className="page-wrapper">
                 <div className="content container-fluid">
@@ -115,9 +143,11 @@ const GoalList = () => {
                                 <h3 className="page-title">Mentorship Goals</h3>
                             </div>
                             <div className="col-sm-2 text-end">
+                                {hasCreatePermission ('Mentorship Goals') && ( 
                                 <Link to="/admin/add-goal">
                                     <button className="btn btn-primary btn-lg">Create Goal</button>
                                 </Link>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -129,7 +159,6 @@ const GoalList = () => {
                                 <div className="card-body">
                                     {loading ? (
                                         <div className="d-flex justify-content-center">
-                                            <Spinner animation="border" />
                                         </div>
                                     ) : (
                                         <div className="table-responsive custom-table">
@@ -151,17 +180,19 @@ const GoalList = () => {
                                                                 <td>{item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "N/A"}</td>
                                                                 <td>
                                                                     <div className="d-flex action-buttons">
+                                                                        {hasUpdatePermission ('Mentorship Goals') && ( 
                                                                         <Link to={`/admin/edit-goal/${item.id}`} className="me-2">
                                                                             <MdEdit fontSize={"18px"} />
                                                                         </Link>
+                                                                        )}
+                                                                        {hasDeletePermission ( 'Mentoeship Goals') && ( 
                                                                         <MdDelete
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation(); // Ensure click event is not blocked
                                                                                 handleDelete(item.id);
-                                                                            }}
-                                                                            fontSize={"18px"}
-                                                                            className="text-danger delete-icon"
-                                                                        />
+                                                                            }}  fontSize={"18px"}  className="text-danger delete-icon"
+                                                                            
+                                                                        />)}
                                                                     </div>
                                                                 </td>
                                                             </tr>

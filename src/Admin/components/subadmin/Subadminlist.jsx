@@ -6,36 +6,69 @@ import axios from "axios";
 import { API_BASE_URL } from "../../../Helper/apicall";
 import SidebarNav from "../sidebar";
 import ShowPermissions from "../CustomModals/ShowPermission";
-import { Spinner } from "react-bootstrap";
+// import { Spinner } from "react-bootstrap";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 // import SimplePagination from "../newpagination/Simplepagination"; 
 import Pagination from "../Pagination/Pagination";
-import Cookies from "js-cookie"; 
+import Cookies from "js-cookie";
 import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
+import Loader from "../Loader";
 
 const Subadminlist = () => {
     const [showPermision, setShowPermision] = useState(false);
     const [subadmin, setSubadmin] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [selectedPermissions, setSelectedPermissions] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPage, setTotalPages] = useState(1);
     const [limit, setLimit] = useState(10);
     const [page, setPage] = useState(1);
     const token = Cookies.get('token');
+    // const fetchStaffList = async () => {
+    //     setLoading(true);
+    //     try {
+    //         ;
+    //         // const token = Cookies.get('token');
+    //         const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getStaff?limit=${limit}&page=${page}`, 
+                
+    //             // headers: {
+    //             //     Authorization: `Bearer ${token}`,
+    //             // },
+    //             {
+    //               withCredentials: true, // ✅ Automatically sends the cookie
+    //             }
+    //             );
+    //         console.log("token:", token)
+    //         if (response.data.status === 200) {
+    //             setSubadmin(response.data.data);
+    //             setCurrentPage(response.data.pagination.currentPage);
+    //             setTotalPages(response.data.pagination.totalPages);
+    //         } else {
+    //             setSubadmin([]);
+    //         }
+    //     } catch (error) {
+    //         toast.error("Failed to fetch subadmins", { position: "top-right" });
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
+    // useEffect(() => {
+    //     fetchStaffList();
+    // }, [page]);
 
     const fetchStaffList = async () => {
         setLoading(true);
         try {
-            // const token = localStorage.getItem("token");
             const token = Cookies.get('token');
-            const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getStaff?limit=${limit}&page=${page}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-            console.log("token:", token)
+            const response = await axiosSecure.get(
+                `${API_BASE_URL}/api/admin/getStaff?limit=${limit}&page=${page}`,
+                {
+                    withCredentials: true,
+                }
+            );
+            console.log("token:", token);
             if (response.data.status === 200) {
                 setSubadmin(response.data.data);
                 setCurrentPage(response.data.pagination.currentPage);
@@ -49,13 +82,13 @@ const Subadminlist = () => {
             setLoading(false);
         }
     };
-
     useEffect(() => {
-        fetchStaffList();
-    }, [page]);
-
+             fetchStaffList();
+        }, [page]);
+    
+    
     const deleteBlogHandler = async (id) => {
-        const token = Cookies.get("token"); 
+        const token = Cookies.get("token");
         if (!token) {
             toast.error("Token missing. Please log in again.");
             return;
@@ -71,11 +104,16 @@ const Subadminlist = () => {
         });
         if (result.isConfirmed) {
             try {
-                const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/deleteStaff/${id}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
+                const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/deleteStaff/${id}`,
+                //      {
+                //     headers: {
+                //         Authorization: `Bearer ${token}`,
+                //     },
+                //    }
+                {
+                    withCredentials: true,
+                }
+            );
                 console.log("token after login :", response.data);
                 if (response.status === 200) {
                     toast.success("Admin Staff and associated Role Permissions deleted successfully!", { position: "top-right" });
@@ -94,15 +132,21 @@ const Subadminlist = () => {
 
     const handleToggleStatus = async (id, currentStatus) => { // const token = localStorage.getItem("token");
         const updatedStatus = currentStatus === 1 ? 0 : 1;
-
         try {
             const token = Cookies.get('token');
             const response = await axiosSecure.post(
                 `${API_BASE_URL}/api/admin/staffStatusUpdate/${id}`,
                 { id, status: updatedStatus },
-                { headers: { Authorization: `Bearer ${token}` } }
+                { 
+                    headers:
+                     {
+                         Authorization: `Bearer ${token}` 
+                     } 
+                }
+                //  { 
+                //     withCredentials: true 
+                // },
             );
-
             if (response.status === 200) {
                 setSubadmin((prev) =>
                     prev.map((staff) =>
@@ -116,13 +160,14 @@ const Subadminlist = () => {
                 toast.error("Failed to update status", { position: "top-right" });
             }
         } catch (error) {
-            toast.error("Error updating status", { position: "top -right" });
+            toast.error("Error updating status", { position: "top-right" });
         }
     };
 
     return (
         <>
-          <SidebarNav />
+            {loading && <Loader />}
+            <SidebarNav />
             <div className="page-wrapper">
                 <div className="content container-fluid">
                     <div className="my-3">
@@ -142,7 +187,9 @@ const Subadminlist = () => {
                             <div className="card">
                                 <div className="card-body">
                                     {loading ? (
-                                        <div className="d-flex justify-content-center"><Spinner animation="border" /></div>
+                                        <div className="d-flex justify-content-center">
+                                            {/* <Spinner animation="border" /> */}
+                                        </div>
                                     ) : (
                                         <div className="table-responsive custom-table">
                                             <table className="table">
@@ -178,7 +225,14 @@ const Subadminlist = () => {
                                                                 <td onClick={() => handleShowPermissions(staff.RolePermission)}>
                                                                     <FaEye fontSize={"18px"} />
                                                                 </td>
-                                                                <td>{new Date(staff.otpExpiresAt).toLocaleDateString()}</td>
+                                                                {/* <td>{new Date(staff.otpExpiresAt).toLocaleDateString()}</td> */}
+                                                                <td>
+                                                                    {new Date().toLocaleDateString('en-US', {
+                                                                        year: 'numeric',
+                                                                        month: '2-digit',
+                                                                        day: '2-digit',
+                                                                    })}
+                                                                </td>
                                                                 <td>
                                                                     <div className="status-toggle">
                                                                         <input

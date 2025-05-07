@@ -21,16 +21,20 @@ const AddAudience = () => {
         audienceName: '', // Initialize audienceName
     });
     const [loading, setLoading] = useState(false); // New loading state
-    const token = Cookies.get('token');
-
+   
     // Fetch audience details when in edit mode 
     useEffect(() => {
         if (isEditMode && id) {
             const fetchAudienceDetails = async () => {
                 try {
-                    const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/audienceDetail?id=${id}`, {
-                        headers: { Authorization: `Bearer ${token}` },
-                    });
+                    const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/audienceDetail?id=${id}`, 
+                    //     {
+                    //     headers: { Authorization: `Bearer ${token}` },
+                    // }
+                    {
+                        withCredentials: true,
+                    }
+                );
                     if (response.data.status === 200) {
                         const { name, status } = response.data.data; // Adjusted to match your data structure
                         setAudienceData({
@@ -59,13 +63,23 @@ const AddAudience = () => {
             };
             let response;
             if (isEditMode) {
-                response = await axiosSecure.post(`${API_BASE_URL}/api/admin/updateAudience?id=${id}`, payload, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
+                response = await axiosSecure.post(`${API_BASE_URL}/api/admin/updateAudience?id=${id}`, payload,
+                //      {
+                //     headers: { Authorization: `Bearer ${token}` },
+                // }
+                {
+                     withCredentials: true,
+                }
+            );
             } else {
-                response = await axiosSecure.post(`${API_BASE_URL}/api/admin/createAudience`, payload, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
+                response = await axiosSecure.post(`${API_BASE_URL}/api/admin/createAudience`, payload, 
+                //     {
+                //     headers: { Authorization: `Bearer ${token}` },
+                // }
+                {
+                    withCredentials: true,
+                }
+             );
             }
             if (response.data.status === 200) {
                 toast.success(isEditMode ? "Audience Updated Successfully!" : "Audience Created Successfully!", { position: "top-right" });

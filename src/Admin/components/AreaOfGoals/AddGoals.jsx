@@ -28,10 +28,12 @@ const AddGoals = () => {
         if (isEditMode && id) {
             const fetchGoalsDetails = async () => {
                 try {
-                    const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/menteeGoalDetail/${id}`, {
-                        headers: { Authorization: `Bearer ${token}` },
-                    });
-
+                    const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/menteeGoalDetail/${id}`, 
+                        // headers: { Authorization: `Bearer ${token}` },
+                        {
+                            withCredentials: true,
+                        }
+                    );
                     if (response.data.status === 200) {
                         const { title, status } = response.data.data;
                         setGoalTitle(title);
@@ -62,13 +64,23 @@ const AddGoals = () => {
             };
             let response;
             if (isEditMode) {
-                response = await axiosSecure.post(`${API_BASE_URL}/api/admin/updateMenteeGoal/${id}`, payload, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
+                response = await axiosSecure.post(`${API_BASE_URL}/api/admin/updateMenteeGoal/${id}`, payload, 
+                    // {
+                    // headers: { Authorization: `Bearer ${token}` },
+                    //    }
+                    {
+                        withCredentials: true,
+                    }
+            );
             } else {
-                response = await axiosSecure.post(`${API_BASE_URL}/api/admin/createMenteeGoal`, payload, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
+                response = await axiosSecure.post(`${API_BASE_URL}/api/admin/createMenteeGoal`, payload, 
+                    // {
+                    // headers: { Authorization: `Bearer ${token}` },
+                    //    }
+                    {
+                        withCredentials: true,
+                    }
+            );
             }
             if (response.data.status === 200) {
                 toast.success(isEditMode ? "Goal Updated Successfully!" : { position: "top-right" });

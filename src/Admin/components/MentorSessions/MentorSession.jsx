@@ -10,7 +10,7 @@ require("../../../client/assets/css/custom.css");
 import { useParams } from "react-router-dom";
 import Cookies from 'js-cookie';
 import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
-
+import Loader from "../Loader.js";
 
 const MentorSession = () => {
     const { id } = useParams();
@@ -18,11 +18,16 @@ const MentorSession = () => {
     const [showPayment, setShowPaymentPopup] = useState(false);
     const [sessionData, setSessionData] = useState([]);
     const token = Cookies.get("token");
+    const [loading, setLoading] = useState(false);
+    const [Loading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const fetchSessions = async () => {
+          const timeoutId = setTimeout (() => {
+            setLoading()
+          })
             try {
-                // const token = localStorage.getItem("token");
+                setLoading(true);
                 const response = await axiosSecure.get(
                     `${API_BASE_URL}/api/admin/mentorSessionLists/${id}`,
                     {
@@ -42,7 +47,7 @@ const MentorSession = () => {
     useEffect(() => {
         const fetchSessions = async () => {
             try {
-                // const token = localStorage.getItem("token");
+                setLoading(true);
                 const response = await axiosSecure.get(
                     `${API_BASE_URL}/api/admin/mentorSessionLists/${id}`,
                     {
@@ -61,6 +66,7 @@ const MentorSession = () => {
 
     return (
         <>
+        {Loading && <Loader />}
             <SidebarNav />
             <div className="page-wrapper">
                 <div className="content container-fluid">

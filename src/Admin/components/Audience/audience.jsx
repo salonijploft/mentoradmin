@@ -6,12 +6,12 @@
  import Pagination from "../Pagination/Pagination";
  import axios from "axios";
  import { API_BASE_URL } from "../../../Helper/apicall";
- import { Spinner } from "react-bootstrap";
  import { ToastContainer, toast } from "react-toastify";
  import "react-toastify/dist/ReactToastify.css";
  import Swal from "sweetalert2";
  import Cookies from "js-cookie"; 
  import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
+ import Loader from "../Loader";
  
  const Audience = () => {
    const [audience, setAudience] = useState([]);
@@ -22,14 +22,17 @@
    const [page, setPage] = useState(1);
    const [isDelete, setIsDelete] = useState(false);
    const [loading, setLoading] = useState(false); 
-   const token = Cookies.get("token");
+  //  const token = Cookies.get("token");
  
    const fetchCategories = async () => {
      try {
-      //  const token = Cookies.get('token');
-       const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getMenteeCategories`, {
-         headers: { Authorization: `Bearer ${token}` },
-       });
+        const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getMenteeCategories`,
+          //  {
+        //  headers: { Authorization: `Bearer ${token}` },  }
+        {
+          withCredentials: true,
+        }
+      );
        if (response.data.status === 200) {
          setCategories(response.data.data);
        }
@@ -42,11 +45,16 @@
      setLoading(true); 
      try {
       //  const token = Cookies.get('token');
-       const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/audienceList?limit=${limit}&page=${page}`, {
-         headers: {
-           Authorization: `Bearer ${token}`,
-         },
-       });
+       const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/audienceList?limit=${limit}&page=${page}`, 
+      //   {
+      //    headers: {
+      //      Authorization: `Bearer ${token}`,
+      //    },
+      //  }
+      {
+        withCredentials: true,
+      }
+      );
        if (response.data.status === 200) {
          setAudience(response.data.data);
          setCurrentPage(response.data.pagination.currentPage);
@@ -81,11 +89,16 @@
     if (result.isConfirmed) {
         try {
             // const token = Cookies.get('token');
-            const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/deleteAudience?id=${id}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/deleteAudience?id=${id}`, 
+            //   {
+            //     headers: {
+            //         Authorization: `Bearer ${token}`,
+            //     },
+            // }
+            {
+              withCredentials: true,
+            }
+          );
             if (response.data.status === 200) {
                 setIsDelete(true);
                 toast.success("Audience deleted successfully!", { position: "top-right" });
@@ -104,6 +117,7 @@
 
    return (
      <>
+     {loading && <Loader />}
        <SidebarNav />
        <div className="page-wrapper">
          <div className="content container-fluid">
@@ -125,7 +139,7 @@
                  <div className="card-body">
                    {loading ? (
                      <div className="d-flex justify-content-center">
-                       <Spinner animation="border" />
+                      
                      </div>
                    ) : (
                      <div className="table-responsive custom-table">

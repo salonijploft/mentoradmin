@@ -13,18 +13,18 @@ import { API_BASE_URL } from "../../../Helper/apicall";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { Spinner } from "react-bootstrap";
 import { Button, Modal, Form } from "react-bootstrap";
 import Swal from "sweetalert2";
 import Cookies from 'js-cookie';
-import {axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
-
+import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
+import { useUser } from "../../../context/UserContext.js";
+import Loader from "../Loader.js";
 
 const Mentee = () => {
   const [status, setStatus] = useState(false);
   const [mentors, setMentors] = useState([]);
   const [mentorStatus, setMentorStatus] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({ MentorName: "" });
   const [showModal, setShowModal] = useState(false);
   const [selectedMentor, setSelectedMentor] = useState(null);
@@ -35,6 +35,9 @@ const Mentee = () => {
   const [page, setPage] = useState(1);
   const location = useLocation();
   const token = Cookies.get("token");
+
+  const { rolePermissions } = useUser();
+  console.log("rolePermissions in the mentee module ", rolePermissions);
 
   // Get the verifyStatus based on the current route
   const routeStatusMap = {
@@ -54,13 +57,15 @@ const Mentee = () => {
       }
       const searchParam = filters.MentorName ? `&search=${filters.MentorName}` : "";
       const response = await axiosSecure.get(
-        // `${API_BASE_URL}/api/admin/getMentees?type=${isDelete}&limit=${limit}&page=${currentPage}${searchParam}`,
         `${API_BASE_URL}/api/admin/getMentees?limit=${limit}&page=${page}${searchParam}`,
+        // {
+        //   headers: {
+        //     Authorization: `Bearer ${token}`,
+        //     "Content-Type": "application/json",
+        //   },
+        // }
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+          withCredentials: true,
         }
       );
       if (response.data.status === 200) {
@@ -116,11 +121,14 @@ const Mentee = () => {
       const response = await axiosSecure.post(
         `${API_BASE_URL}/api/admin/menteeStatuUpdate/${mentorId}`,
         { id: mentorId, status: newStatus },
+        // {
+        //   headers: {
+        //     Authorization: `Bearer ${token}`,
+        //     "Content-Type": "application/json",
+        //   },
+        // }
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+          withCredentials: true,
         }
       );
       if (response.data.status === 200) {
@@ -152,12 +160,16 @@ const Mentee = () => {
       if (result.isConfirmed) {
         try {
           const token = Cookies.get("token");
-          const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/mentorDelete/${mentorId}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
+          const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/mentorDelete/${mentorId}`, 
+          //   {
+          //   headers: {
+          //     Authorization: `Bearer ${token}`,
+          //   },
+          // }
+          {
+            withCredentials: true,
+          }
+        );
           if (response.status === 200) {
             toast.success("Mentor deleted successfully!");
             setMentors((prevMentors) => prevMentors.filter((mentor) => mentor.id !== mentorId));
@@ -171,8 +183,22 @@ const Mentee = () => {
   };
 
 
+  // Permission Check Function
+  const hasPermission = (moduleName, action) => {
+    const permission = rolePermissions.find(permission => permission.moduleName === 'Mentee');
+    console.log("permissions for Mentee Module:", permission);
+    return permission ? permission[action] === 1 : false;
+  };
+
+  const hasReadPermission = (moduleName) => hasPermission(moduleName, 'isRead');
+  const hasCreatePermission = (moduleName) => hasPermission(moduleName, 'isCreate');
+  const hasUpdatePermission = (moduleName) => hasPermission(moduleName, 'isUpdate');
+  const hasDeletePermission = (moduleName) => hasPermission(moduleName, 'isDelete');
+
+
   return (
     <>
+    {loading && <Loader />}
       <SidebarNav />
       <div className="page-wrapper">
         <div className="content container-fluid">
@@ -181,7 +207,6 @@ const Mentee = () => {
             <div className="row">
               <div className="col-sm-12">
                 <h3 className="page-title">List of Mentee</h3>
-
               </div>
             </div>
           </div>
@@ -195,7 +220,7 @@ const Mentee = () => {
                       <thead>
                         <tr>
                           <th className="text-start">Name / Email</th>
-                          <th>Issubscribed Email</th> 
+                          <th>Issubscribed Email</th>
                           <th>Created At</th>
                           <th>Account Status</th>
                           <th>Last Login Date</th>
@@ -204,10 +229,7 @@ const Mentee = () => {
                       </thead>
                       <tbody>
                         {loading ? (
-                          <tr>
-                            <td colSpan="8" className="text-center">
-                              <Spinner height={50} width={50} color="#4fa94d" />
-                            </td>
+                          <tr>  
                           </tr>
                         ) : mentors.length === 0 ? (
                           <tr>
@@ -235,30 +257,35 @@ const Mentee = () => {
                               <td>
                                 <span className="user-name">{mentor.createdAt || "-"}</span>
                               </td>
-
                               <td>
+                                {hasUpdatePermission ('Mentee') && ( 
                                 <div className="status-toggle">
                                   <input
                                     id={`rating${mentor.id}`}
                                     className="check"
                                     type="checkbox"
-                                    checked={mentor.status === 1} // Ensure you use `status`, not `verifyStatus`
+                                    checked={mentor.status === 1} 
                                     onChange={() => handleToggleStatus(mentor.id, mentor.status)}
                                   />
                                   <label htmlFor={`rating${mentor.id}`} className="checktoggle checkbox-bg">  Toggle </label>
                                 </div>
+                                )}
                               </td>
 
                               <td>{mentor.lastLoginDate || "-"}</td>
 
                               <td>
+                               
                                 <div className="d-flex gap-2">
+                                
                                   <Link to={`/admin/mentee-detail/${mentor.id}`}>
                                     <FaEye fontSize={"18px"} />
                                   </Link>
+                                  {hasDeletePermission("Mentee") && ( 
                                   <MdDelete fontSize={"18px"} className="text-danger delete-icon mt-1"
                                     onClick={() => handleDelete(mentor.id)}
                                   />
+                                  )}
                                   <>
                                     <Link>
                                       <FaWallet fontSize={"18px"} />
@@ -270,20 +297,18 @@ const Mentee = () => {
                                       <button className="btn btn-primary">Sessions</button>
                                     </Link>
                                   </>
-                                </div>
+                                </div>  
                               </td>
                             </tr>
                           ))
                         )}
                       </tbody>
-
                     </table>
                   </div>
                 </div>
               </div>
               <div className="d-flex justify-content-end mt-3">
-                <Pagination
-                  current={currentPage}
+                <Pagination current={currentPage}
                   total={totalPage}
                   pagination={(page) => { setPage(page); }}
                 />

@@ -6,9 +6,9 @@ import { API_BASE_URL } from "../../../Helper/apicall";
 import { toast } from "react-toastify"; // Import ToastContainer and toast
 import "react-toastify/dist/ReactToastify.css";
 import Swal from "sweetalert2";
-import { Spinner } from "react-bootstrap"; 
 import Cookies from "js-cookie";
 import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
+import Loader from "../Loader.js";
 
 const FaqList = () => {
     const [faqs, setFaqs] = useState([]);
@@ -98,6 +98,7 @@ const FaqList = () => {
     };
     return (
         <>
+        {loading && <Loader />}
             <SidebarNav />
             <div className="page-wrapper">
                 <div className="container mt-4">
@@ -109,9 +110,7 @@ const FaqList = () => {
                     </div>
 
                     {loadingFaqs || loadingCategories ? (
-                        <div className="d-flex justify-content-center">
-                            <Spinner animation="border" />
-                        </div>
+                      <></>
                     ) : (
                         <table className="table table-bordered">
                             <thead>

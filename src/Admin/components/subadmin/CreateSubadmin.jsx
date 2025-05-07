@@ -3,14 +3,15 @@ import SidebarNav from "../sidebar";
 import { FaEdit, FaEye, FaEyeSlash } from "react-icons/fa";
 import { FaArrowLeftLong } from "react-icons/fa6";
 import { Formik, Form, Field, ErrorMessage } from "formik";
-import { subadmin } from "../../../utils/validationSchema";
+import * as Yup from "yup"; // Import Yup for validation
 import axios from "axios";
 import { API_BASE_URL } from "../../../Helper/apicall";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import moduleUrls from '../../../utils/moduleUrls';
-import Cookies from "js-cookie"; 
-import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
+import Cookies from "js-cookie";
+import { axiosSecure } from "../../../utils/axiosSecureInstance";
+import Loader from "../Loader";
 
 const CreateSubadmin = () => {
     const location = useLocation();
@@ -18,7 +19,7 @@ const CreateSubadmin = () => {
     const navigate = useNavigate();
     const isEditMode = location.pathname.includes(`/subadmin/edit/`);
     const token = Cookies.get('token');
-
+    const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [imagePreview, setImagePreview] = useState(null);
     const [initialValues, setInitialValues] = useState({
@@ -54,20 +55,22 @@ const CreateSubadmin = () => {
 
     const fetchStaffDetails = async () => {
         try {
+            setLoading(true); // Start loading
             const token = Cookies.get("token");
-            console.log("Auth Token:", token); 
             if (!token || token.split('.').length !== 3) {
                 toast.error("Invalid or missing auth token.");
                 return;
             }
-    
-            const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/staffDetail/${staffId}`, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-    
+            const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/staffDetail/${staffId}`
+                // headers: {
+                //     "Content-Type": "multipart/form-data",
+                //     Authorization: `Bearer ${token}`,
+                // },
+                ,
+                {
+                    withCredentials: true, 
+                }
+            );
             if (response.data.status === 200) {
                 const staffData = response.data.data;
                 const permissions = transformRolePermissions(staffData.RolePermission);
@@ -89,9 +92,11 @@ const CreateSubadmin = () => {
         } catch (error) {
             console.error("Error fetching staff details:", error);
             toast.error("Error fetching staff details. Please try again.");
+        } finally {
+            setLoading(false); // Stop loading after fetching
         }
     };
-    
+
     useEffect(() => {
         if (isEditMode && staffId) {
             fetchStaffDetails();
@@ -108,9 +113,10 @@ const CreateSubadmin = () => {
             toast.error("Please select a valid image file.");
         }
     };
-    
+
     const handleSubmit = async (values) => {
         try {
+            setLoading(true); // Start loading
             const dataToSend = new FormData();
             dataToSend.append("firstName", values.firstName);
             dataToSend.append("lastName", values.lastName);
@@ -122,7 +128,7 @@ const CreateSubadmin = () => {
                 dataToSend.append("profileImage", values.profile_image);
             }
             dataToSend.append("status", values.status);
-    
+
             const rolePermissions = Object.keys(values.permissions).map((module) => {
                 const moduleUrl = moduleUrls[module]?.view; // Get the URL for the module
                 return {
@@ -136,26 +142,25 @@ const CreateSubadmin = () => {
             });
             rolePermissions.forEach((permission, index) => {
                 dataToSend.append(`rolePermission[${index}][moduleName]`, permission.moduleName);
-                dataToSend.append(`rolePermission[${index}][moduleUrl]`, permission.moduleUrl); 
+                dataToSend.append(`rolePermission[${index}][moduleUrl]`, permission.moduleUrl);
                 dataToSend.append(`rolePermission[${index}][isRead]`, permission.isRead);
                 dataToSend.append(`rolePermission[${index}][isAdd]`, permission.isAdd);
                 dataToSend.append(`rolePermission[${index}][isUpdate]`, permission.isUpdate);
                 dataToSend.append(`rolePermission[${index}][isDelete]`, permission.isDelete);
             });
-            console.log([...dataToSend]);
-    
             const url = isEditMode
                 ? `${API_BASE_URL}/api/admin/updateStaff/${staffId}`
                 : `${API_BASE_URL}/api/admin/createStaff`;
-    
+
             const response = await axiosSecure({
-                method: isEditMode ? "post" : "post",
+                method: "post",
                 url,
                 data: dataToSend,
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                    Authorization: `Bearer ${token}`,
-                },
+                // headers: {
+                //     "Content-Type": "multipart/form-data",
+                //     Authorization: `Bearer ${token}`,
+                // },
+                                
             });
             if (response.status === 200) {
                 toast.success(isEditMode ? "Subadmin updated successfully!" : "Subadmin created successfully!");
@@ -166,11 +171,30 @@ const CreateSubadmin = () => {
         } catch (error) {
             console.error("Error submitting form:", error);
             toast.error("Error creating/updating subadmin.");
+        } finally {
+            setLoading(false); // Stop loading after submission
         }
     };
 
+    //validation Schema for the staff Admin 
+    const validationSchema = Yup.object().shape({
+        firstName: Yup.string().required("First Name is required"),
+        lastName: Yup.string().required("Last Name is required"),
+        email: Yup.string().email("Invalid email format")
+            .required("Email is required"),
+        password: Yup.string()
+            .when('$isEditMode', {
+                is: false, // When not in edit mode
+                then: Yup.string().required("Password is required"), // Password is required
+                // otherwise: Yup.string().notRequired(), // Password is optional in edit mode
+            }),
+        status: Yup.string().required("Status is required"),
+    });
+
+
     return (
         <div>
+            {loading && <Loader />}
             <SidebarNav />
             <div className="page-wrapper">
                 <div className="content container-fluid">
@@ -189,14 +213,16 @@ const CreateSubadmin = () => {
                                     <Formik
                                         enableReinitialize
                                         initialValues={initialValues}
-                                        // validationSchema={subadmin}
+                                        validationSchema={validationSchema}
                                         onSubmit={(values) => {
-                                            console.log("Formik onSubmit triggered"); // Add this
                                             handleSubmit(values);
                                         }}
+                                        validateOnChange={true}
+                                        validateOnBlur={true}
+                                        context={{ isEditMode }}
                                     >
                                         {({ values, setFieldValue, handleChange }) => (
-                                            <Form>  
+                                            <Form>
                                                 <div className="col-md-12 text-right">
                                                     <div className="col-md-12" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
                                                         <div className="profile-containers" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '20px' }}>
@@ -204,7 +230,7 @@ const CreateSubadmin = () => {
                                                                 src={imagePreview || '/assets/img/dummy.png'}
                                                                 alt="Profile"
                                                                 className="profile-images"
-                                                                style={{ width: '150px', height: '150px', borderRadius: '50%', margin: '0 auto' }} 
+                                                                style={{ width: '150px', height: '150px', borderRadius: '50%', margin: '0 auto' }}
                                                             />
                                                             <label htmlFor="profile_image" className="edit-icons" style={{ cursor: 'pointer', marginTop: '10px' }}>
                                                                 <FaEdit />
@@ -236,6 +262,32 @@ const CreateSubadmin = () => {
                                                         <Field className="form-control" type="email" name="email" />
                                                         <ErrorMessage name="email" component="div" className="text-danger" />
                                                     </div>
+                                                    {/* {!isEditMode && (
+                                                        <div className="col-md-6">
+                                                            <label>Password</label>
+                                                            <div className="position-relative">
+                                                                <Field
+                                                                    className="form-control"
+                                                                    type={showPassword ? "text" : "password"}
+                                                                    name="password"
+                                                                />
+                                                                <span
+                                                                    className="password-toggle"
+                                                                    onClick={() => setShowPassword(!showPassword)}
+                                                                    style={{
+                                                                        position: "absolute",
+                                                                        right: "10px",
+                                                                        top: "50%",
+                                                                        transform: "translateY(-50%)",
+                                                                        cursor: "pointer",
+                                                                    }}
+                                                                >
+                                                                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                                                                </span>
+                                                            </div>
+                                                            <ErrorMessage name="password" component="div" className="text-danger" />
+                                                        </div>
+                                                    )} */}
                                                     {!isEditMode && (
                                                         <div className="col-md-6">
                                                             <label>Password</label>
@@ -245,13 +297,25 @@ const CreateSubadmin = () => {
                                                                     type={showPassword ? "text" : "password"}
                                                                     name="password"
                                                                 />
-                                                                <span className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
+                                                                <span
+                                                                    className="password-toggle"
+                                                                    onClick={() => setShowPassword(!showPassword)}
+                                                                    style={{
+                                                                        position: "absolute",
+                                                                        right: "10px",
+                                                                        top: "50%",
+                                                                        transform: "translateY(-50%)",
+                                                                        cursor: "pointer",
+                                                                    }}
+                                                                >
                                                                     {showPassword ? <FaEyeSlash /> : <FaEye />}
                                                                 </span>
-                                                                <ErrorMessage name="password" component="div" className="text-danger" />
                                                             </div>
+                                                            <ErrorMessage name="password" component="div" className="text-danger" />
                                                         </div>
                                                     )}
+
+
                                                 </div>
                                                 <div className="form-group mt-3">
                                                     <label>Roles & Permissions</label>
@@ -263,7 +327,6 @@ const CreateSubadmin = () => {
                                                                 <th>Edit</th>
                                                                 <th>Delete</th>
                                                                 <th>Create</th>
-                                                                {/* <th> URL</th> */}
                                                             </tr>
                                                         </thead>
                                                         <tbody>
@@ -298,6 +361,7 @@ const CreateSubadmin = () => {
                                                             <option value="1">Active</option>
                                                             <option value="0">Inactive</option>
                                                         </select>
+                                                        <ErrorMessage name="status" component="div" className="text-danger" />
                                                     </div>
                                                 </div>
                                                 <div className="text-center mt-4">

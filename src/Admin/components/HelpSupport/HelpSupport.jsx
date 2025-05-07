@@ -1,10 +1,14 @@
 import React from "react";
-
 import SidebarNav from "../sidebar";
 import { Link } from "react-router-dom";
 import Pagination from "../Pagination/Pagination";
-
+import { useUser  } from "../../../context/UserContext";
+import moduleUrls from "../../../utils/moduleUrls";
 const HelpSupport = () => {
+
+    const {rolePermissions} = useUser();
+    console.log("helpsupport rolePermissions:", rolePermissions);
+
     const helpAndSupportData = [
         {
             ticketId: "TCKT-1001",
@@ -56,9 +60,20 @@ const HelpSupport = () => {
             createdAt: "2025-03-04T14:45:50Z"
         }
     ];
-
-
-
+  
+    //check the function list 
+    const hasPermission = (moduleName, action) => {
+        console.log("moduleName in Bloglist:", moduleName);
+        const permission = rolePermissions.find(permission => permission.moduleName === 'Help-&-support') 
+        console.log("permission for bloglist:", permission);
+        return permission ? permission[action] === 1 : false;
+       }  
+         
+    
+    const hasReadPermission = (moduleName) => hasPermission(moduleName, 'isRead');
+    const hasCreatePermission = (moduleName) => hasPermission(moduleName, 'isAdd');
+    const hasUpdatePermission = (moduleName) => hasPermission(moduleName, 'isUpdate');
+    const hasDeletePermission = (moduleName) => hasPermission(moduleName, 'isDelete');
 
     return (
         <>
@@ -67,13 +82,9 @@ const HelpSupport = () => {
                 <div className="content container-fluid">
                     {/* Page Header */}
                     <div className="page-header">
-
-
-
                         <div className="row">
                             <div className="col-sm-12">
                                 <h3 className="page-title">Help & Support</h3>
-
                             </div>
                         </div>
 
@@ -84,13 +95,11 @@ const HelpSupport = () => {
                                     className="form-control"
                                     placeholder="Search by Ticket ID"
                                     name="SessionTrack"
-
                                 />
                             </div>
-
                             <div className="col-md-3 d-flex gap-2">
-                                <button className="btn btn-primary h-75" onClick={() => { }}>Search</button>
-                                <button className="btn btn-secondary">Reset</button>
+                                <button className="btn btn-primary h-75" onClick={() => { }}>Search</button>   
+                                <button className="btn btn-secondary">Reset</button>    
                             </div>
                         </div>
                     </div>
@@ -123,7 +132,7 @@ const HelpSupport = () => {
                                                         <td>{ticket.email}</td>
                                                         <td>{ticket.title}</td>
                                                         <td>{ticket.subject}</td>
-                                                        <td>
+                                                        <td>{hasUpdatePermission ('Help-&-support')  &&  ( 
                                                             <select
                                                                 className="form-select w-100 p-2"
                                                                 style={{
@@ -141,6 +150,7 @@ const HelpSupport = () => {
                                                                 <option value="Resolved">Resolved</option>
                                                                 <option value="Closed">Closed</option>
                                                             </select>
+                                                            )}
                                                         </td>
                                                         <td>
                                                             {new Date(ticket.createdAt).toLocaleDateString()} <br />
@@ -148,8 +158,9 @@ const HelpSupport = () => {
                                                         </td>
                                                         <td>
                                                             <div className="d-flex action-buttons">
-
+                                                                  {hasDeletePermission ('Help-&-support') && (  
                                                                 <button className="btn btn-danger btn-sm ms-2">Delete</button>
+                                                            )} 
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -160,8 +171,6 @@ const HelpSupport = () => {
                                 </div>
                             </div>
                             <div className="d-flex justify-content-end mt-3">
-
-
                                 <Pagination
                                     current={1}
                                     total={5}
@@ -172,8 +181,6 @@ const HelpSupport = () => {
                     </div>
                 </div>
             </div>
-
-
         </>
     );
 };

@@ -3,54 +3,73 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../../../Helper/apicall";
 import { avatar12, logo1, logoSmall } from "../imagepath";
-import Cookies from "js-cookie"; 
+import Cookies from "js-cookie";
 
 const Header = () => {
   const [userData, setUserData] = useState(null);
-  const [profileImg, setProfileImg] = useState(null);
+  // const [profileImg, setProfileImg] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(!!Cookies.get("token"));
   const navigate = useNavigate();
-  const token = Cookies.get("token")
+  // const token = Cookies.get("token")
  
-  const fetchUserProfile = async () => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/api/admin/profileDetail`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (response.data.status === 200) {
-        setUserData(response.data.data);
-        setProfileImg(`${API_BASE_URL}/${response.data.data.profileImage}?t=${Date.now()}`); // Prevent caching
-      }
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-    }
-  };
+  // const fetchUserProfile = async () => {
+  //   try {
+  //     const response = await axios.get(`${API_BASE_URL}/api/admin/profileDetail`, 
+  //     {
+  //       withCredentials: true,
+  //     }
+  //   );
+  //     if (response.data.status === 200) {
+  //       setUserData(response.data.data);
+  //       setProfileImg(`${API_BASE_URL}/${response.data.data.profileImage}?t=${Date.now()}`); // Prevent caching
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching profile:", error);
+  //   }
+  // };
 
-  useEffect(() => {
-    if (isAuthenticated) fetchUserProfile();
+  // useEffect(() => {
+  //   if (isAuthenticated) fetchUserProfile();
 
-    const handleProfileUpdated = (event) => {
-      const newProfileImage = event.detail.profileImage;
-      if (newProfileImage) {
-        // Update the profile image immediately
-        setProfileImg(`${API_BASE_URL}/${newProfileImage}?t=${Date.now()}`); 
-      }
-    };
-    const handleLoginSuccess = () => {
-      setIsAuthenticated(true); // Update authentication state
-      fetchUserProfile(); // Re-fetch user profile
-    };
+  //   const handleProfileUpdated = (event) => {
+  //     const newProfileImage = event.detail.profileImage;
+  //     if (newProfileImage) {
+  //       // Update the profile image immediately
+  //       setProfileImg(`${API_BASE_URL}/${newProfileImage}?t=${Date.now()}`); 
+  //     }
+  //   };
+  //   const handleLoginSuccess = () => {
+  //     setIsAuthenticated(true); // Update authentication state
+  //     fetchUserProfile(); // Re-fetch user profile
+  //   };
 
-    // Add event listeners for profile updates and login success
-    window.addEventListener("profile-updated", handleProfileUpdated);
-    window.addEventListener("login-success", handleLoginSuccess);
+  //   // Add event listeners for profile updates and login success
+  //   window.addEventListener("profile-updated", handleProfileUpdated);
+  //   window.addEventListener("login-success", handleLoginSuccess);
      
-    return () => {
-      // Clean up event listeners on component unmount
-      window.removeEventListener("profile-updated", handleProfileUpdated);
-      window.removeEventListener("login-success", handleLoginSuccess);
-    };
-  }, [isAuthenticated]);
+  //   return () => {
+  //     // Clean up event listeners on component unmount
+  //     window.removeEventListener("profile-updated", handleProfileUpdated);
+  //     window.removeEventListener("login-success", handleLoginSuccess);
+  //   };
+  // }, [isAuthenticated]);
+
+
+  const [profileImage, setProfileImage] = useState('');
+  // Function to fetch profile details
+  const fetchProfileDetails = async () => {
+      try {
+          const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/admin/profileDetail`);
+          if (response.data.status === 200) {
+              setProfileImage(response.data.data.profileImage);
+          }
+      } catch (error) {
+          console.error("Error fetching profile details:", error);
+      }
+  };
+  useEffect(() => {
+      fetchProfileDetails();
+  }, []);
 
   // Logout function
   const handleLogout = () => {
@@ -58,11 +77,10 @@ const Header = () => {
     setIsAuthenticated(false); 
     window.dispatchEvent(new Event("logout-success"));
     // navigate("/admin/login"); 
-    window.location.href = "/admin/login"
+    window.location.href = "/admin/login";
   };
-
   // Conditional styles for authenticated users
-  const profileImage = profileImg ? profileImg : avatar12;
+  // const profileImage = profileImg ? profileImg : avatar12;
 
   return (
     <>
@@ -90,7 +108,7 @@ const Header = () => {
         {/* Header Right Menu */}
         <ul className="nav user-menu">
           {/* User Profile Dropdown */}
-          {isAuthenticated && (
+          {/* {isAuthenticated && ( */}
             <li className="nav-item dropdown has-arrow">
               <Link to="#" className="dropdown-toggle nav-link" data-bs-toggle="dropdown">
                 <span className="user-imggg">
@@ -102,7 +120,7 @@ const Header = () => {
                 <Link className="dropdown-item" to="#" onClick={handleLogout}>Logout</Link>
               </div>
             </li>
-          )}
+          {/* // )} */}
         </ul>
       </div>
     </>

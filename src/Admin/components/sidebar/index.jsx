@@ -4,6 +4,7 @@ import { Scrollbars } from "react-custom-scrollbars";
 // import FeatherIcon from "feather-icons-react";
 import { Appcontext } from "../../../approuter";
 import { useLocation } from "react-router-dom";
+import { useUser } from "../../../context/UserContext";
 
 const SidebarNav = () => {
   // let pathname = props?.location?.pathname;
@@ -13,6 +14,9 @@ const SidebarNav = () => {
 
   const { setIsAuth } = useContext(Appcontext);
   const [isSideMenu, setSideMenu] = useState("");
+  const { rolePermissions } = useUser();
+  console.log("rolePermissions in the Sidebar: ", rolePermissions);
+  
 
   const toggleSidebar = (value) => {
     setSideMenu(value);
@@ -50,6 +54,14 @@ const SidebarNav = () => {
     setMouseOverSidebar(false);
   };
 
+  
+  // Function to check read permission for the Mentor module
+  const hasReadPermission = (moduleName) => {
+    const permission = rolePermissions.find(permission => permission.moduleName === moduleName);
+    console.log("module name inside the sidebar:", permission);
+    return permission ? permission.isRead === 1 : false; 
+  };
+
   return (
     <>
       {/* <!-- Sidebar --> */}
@@ -79,11 +91,12 @@ const SidebarNav = () => {
                   </span>
                 </li>
                 <li className={pathname === "/admin" ? "active" : ""}>
+                { hasReadPermission ('Dashboard') && (
                   <Link to="/admin">
                     <span>Dashboard</span>
                   </Link>
+                   )}
                 </li>
-
                 <li
                   className={pathname?.includes("subadmin") ? "active" : ""}
                 >
@@ -93,6 +106,7 @@ const SidebarNav = () => {
                 </li>
 
                 <li className="submenu">
+                {hasReadPermission('Mentor') && (
                   <Link
                     to="#"
                     className={isSideMenu == "reports" ? "subdrop" : ""}
@@ -102,12 +116,14 @@ const SidebarNav = () => {
                   >
                     <span> Mentors</span> <span className="menu-arrow"></span>
                   </Link>
+                )}
                   {isSideMenu == "reports" ? (
                     <ul
                       style={{
                         display: isSideMenu == "reports" ? "block" : "none",
                       }}
                     >
+                       
                       <li>
                         <Link
                           to="/admin/approved-mentors"
@@ -148,7 +164,7 @@ const SidebarNav = () => {
                         >
                           Deleted Mentors
                         </Link>
-                      </li>
+                      </li>     
                       {/* <li>
                         <Link
                           to="/admin/reverify-mentors"
@@ -165,6 +181,7 @@ const SidebarNav = () => {
                   )}
                 </li>
                 <li className="submenu">
+                  {hasReadPermission ("Mentee") && ( 
                   <Link
                     to="#"
                     className={isSideMenu == "mentees" ? "subdrop" : ""}
@@ -174,6 +191,7 @@ const SidebarNav = () => {
                   >
                     <span> Mentees</span> <span className="menu-arrow"></span>
                   </Link>
+                  )}
                   {isSideMenu == 'mentees' ?
                     <ul style={{
                       display: isSideMenu == "mentees" ? "block" : "none",
@@ -195,39 +213,42 @@ const SidebarNav = () => {
                     </ul> : ""}
 
                 </li>
-                <li
-                  className={
+                <li className={
                     pathname?.includes("/admin/booking-list") ? "active" : ""
                   }
                 >
+                   {hasReadPermission ("Booking List") && (
                   <Link to="/admin/booking-list">
                     <span>Booking List</span>
                   </Link>
+                  )}
                 </li>
-
+              
                 <li
                   className={pathname?.includes("category-list") ? "active" : ""}
                 >
+                  {hasReadPermission ("Mentorship Categories") && (
                   <Link to="/admin/category-list">
                     <span>Mentorship Categories</span>
                   </Link>
+                  )}
                 </li>
                 <li
                   className={pathname?.includes("admin/goal-list") ? "active" : ""}
                 >
+                {hasReadPermission ("Mentorship Goals") && (
                   <Link to="/admin/goal-list">
                     <span>Mentorship Goals</span>
                   </Link>
+                  )}
                 </li>
-                <li
-                  className={pathname?.includes("transaction") ? "active" : ""}
-                >
+                <li className={pathname?.includes("transaction") ? "active" : ""} >
+                  {hasReadPermission ("Transactions") && (
                   <Link to="/admin/transactions-list">
                     <span>Transactions</span>
                   </Link>
+                  )}
                 </li>
-
-
                 <li className={pathname?.includes("cancellation-fees") ? "active" : ""} >
                   <Link to="/admin/cancellation-fees">
                     <span>Cancellation Fees</span>
@@ -263,33 +284,34 @@ const SidebarNav = () => {
                     <span>Unremmited WHT</span>
                   </Link>
                 </li> */}
-
                 <li className={pathname?.includes("dispute-management") ? "active" : ""} >
+                  { hasReadPermission ('Dispute Management') && (
                   <Link to="/admin/dispute-management">
                     <span>Dispute Management</span>
                   </Link>
+                  )}
                 </li>
 
                 <li
                   className={pathname?.includes("help-support") ? "active" : ""}
-                >
+                > {hasReadPermission ('Help-&-support') && ( 
                   <Link to="/admin/help-support">
                     <span>Help & Support</span>
                   </Link>
+                  )}
                 </li>
                 <li
                   className={
                     pathname?.includes("/admin/blogs") ? "active" : ""
                   }
                 >
+                  {hasReadPermission ('Blogs') && ( 
                   <Link to="/admin/blogs">
                     <span>Blogs</span>
                   </Link>
+                  )}
                 </li>
-                <li
-                  className={
-                    pathname?.includes("/admin/blogs") ? "active" : ""
-                  }
+                <li className={ pathname?.includes("/admin/blogs") ? "active" : "" }
                 >
                   {/* Two new List */}
                   <Link to="/admin/audience">
@@ -316,10 +338,11 @@ const SidebarNav = () => {
                       ? "active"
                       : ""
                   }
-                >
+                >{hasReadPermission ('Settings') && ( 
                   <Link to="/admin/generalsettings">
                     <span> Settings</span>
                   </Link>
+                  )}
                 </li>
                 <li className="submenu">
                   <Link

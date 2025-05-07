@@ -9,7 +9,7 @@ import { API_BASE_URL } from "../../../Helper/apicall";
 import { useParams } from "react-router-dom";
 import Cookies from "js-cookie"; 
 import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
-
+import Loader from "../Loader.js";
 require("../../../client/assets/css/custom.css");
 
 const MentorTracks = () => {
@@ -25,13 +25,18 @@ const MentorTracks = () => {
     const [sessionDetails, setSessionDetails] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(false);
     const token = Cookies.get('token');
-
+   
     const fetchSessionDetails = async (trackId) => {
         setIsLoading(true);
         setError(null);
+        const timeoutId = setTimeout(() => {
+            setLoading(false); // Stop loading after a minimum duration
+          }, 2000); // Set minimum loading time (e.g., 2 seconds)
+    
         try {
-        
+            setLoading(true);
             const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/trackToSession?trackId=${trackId}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -43,12 +48,19 @@ const MentorTracks = () => {
             setError("Failed to load session details.");
         } finally {
             setIsLoading(false);
+            setLoading(false);
+            clearTimeout(timeoutId);
         }
     };
 
     const fetchSessionTracks = async () => {
+        const timeoutId = setTimeout(() => {
+            setLoading(false); // Stop loading after a minimum duration
+          }, 1500); // Set minimum loading time (e.g., 2 seconds)
+    
         try {
-          
+            setLoading(true);
+            
             const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/mentorTrackLists/${id}?limit=${limit}&page=${page}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -60,6 +72,11 @@ const MentorTracks = () => {
         } catch (error) {
             console.error("Error fetching session tracks:", error);
         }
+        finally {
+            setIsLoading(false);
+            setLoading(false);
+            clearTimeout(timeoutId);
+        }
     };
 
     useEffect(() => {
@@ -68,6 +85,7 @@ const MentorTracks = () => {
 
     return (
         <>
+        {loading && <Loader />}
             <SidebarNav />
             <div className="page-wrapper">
                 <div className="content container-fluid">

@@ -10,6 +10,8 @@ import "react-toastify/dist/ReactToastify.css";
 import Swal from "sweetalert2";
 import Cookies from "js-cookie";
 import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
+import { useUser } from "../../../context/UserContext";
+import Loader from "../Loader";
 
 const CategoryList = () => {
     const [categories, setCategories] = useState([]);
@@ -19,7 +21,12 @@ const CategoryList = () => {
     const [page, setPage] = useState(1);
     const navigate = useNavigate();
     const token = Cookies.get('token');
+    const { rolePermissions } = useUser();
+    const [isLoading, setIsLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
+    // console.log("rolePermissions in the categorylist module ", rolePermissions);
 
+   
     const fetchData = async () => {
         const token = Cookies.get('token');
         if (!token) {
@@ -27,15 +34,24 @@ const CategoryList = () => {
             navigate("/login"); // Redirect if token is missing
             return;
         }
+        const timeoutId = setTimeout(() => {
+            setLoading(false); // Stop loading after a minimum duration
+          }, 5000); // Set minimum loading time (e.g., 2 seconds)
+    
         try {
-            const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getMenteeCategories?limit=${limit}&page=${page}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                },
-            });
-            console.log("Response Data:", response.data.pagination.currentPage); // Debugging
-
+            setLoading(true)
+            const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getMenteeCategories?limit=${limit}&page=${page}`,
+            //  {
+            //     headers: {
+            //         Authorization: `Bearer ${token}`,
+            //         "Content-Type": "application/json"
+            //     },
+            //   }
+            {
+                withCredentials: true,
+            }
+        );
+            console.log("Response Data:", response.data.pagination.currentPage);
             if (response.data.status === 200) {
                 setCategories(response.data.data); // Ensure categories is an array
                 setCurrentPage(response.data.pagination.currentPage);
@@ -52,17 +68,19 @@ const CategoryList = () => {
             }
             if (error.response?.status === 401) {
                 console.error("Unauthorized access. Redirecting to login.");
-                navigate("/login"); // Redirect to login if unauthorized
+                navigate("/login");
             }
         }
+        finally {
+            setIsLoading(false);
+            clearTimeout(timeoutId);
+            setLoading(false);
+        }
     };
-    // Fetch data when the component mounts
     useEffect(() => {
         fetchData();
     }, [page]);
 
-    ///delete 
-    // Function to handle category deletion
     const handleDelete = async (id) => {
         const result = await Swal.fire({
             title: 'Are you sure?',
@@ -73,18 +91,18 @@ const CategoryList = () => {
             cancelButtonColor: '#d33',
             confirmButtonText: 'Yes, delete it!'
         });
-    
-        // ✅ ONLY proceed if user confirmed
         if (result.isConfirmed) {
             if (!id) {
                 console.error("Invalid category ID");
                 return;
             }
-    
             try {
-                const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/deleteMenteeCategory/${id}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/deleteMenteeCategory/${id}`, 
+                    // { headers: { Authorization: `Bearer ${token}` }
+                    {
+                        withCredentials: true,
+                    }
+                );
                 console.log("Delete API response:", response);
                 if (response.data.status === 200) {
                     setCategories(categories.filter(category => category.id !== id));
@@ -98,10 +116,20 @@ const CategoryList = () => {
             console.log("Deletion cancelled by user.");
         }
     };
-    
+
+    // function to check the Permission
+    const hasPermission = (moduleName, action) => {
+        const permission = rolePermissions.find(permission => permission.moduleName === 'Mentorship Categories');
+        return permission ? permission[action] === 1 : false;
+    };
+    const hasReadPermission = (moduleName) => hasPermission(moduleName, 'isRead');
+    const hasCreatePermission = (moduleName) => hasPermission(moduleName, 'isAdd')
+    const hasUpdatePermission = (moduleName) => hasPermission(moduleName, 'isUpdate');
+    const hasDeletePermission = (moduleName) => hasPermission(moduleName, 'isDelete');
 
     return (
         <>
+        {loading && <Loader />}
             <SidebarNav />
             <div className="page-wrapper">
                 <div className="content container-fluid">
@@ -112,13 +140,14 @@ const CategoryList = () => {
                                 <h3 className="page-title">Mentorship Categories</h3>
                             </div>
                             <div className="col-sm-2 text-end">
-                                <Link to="/admin/add-category">
-                                    <button className="btn btn-primary btn-lg">Create Category</button>
-                                </Link>
+                                {hasCreatePermission('Mentorship Categories') && (
+                                     <Link to="/admin/add-category">      
+                                        <button className="btn btn-primary btn-lg">Create Category</button>
+                                     </Link>
+                                )}
                             </div>
                         </div>
                     </div>
-                    {/* /Page Header */}
 
                     <div className="row">
                         <div className="col-sm-12">
@@ -141,16 +170,19 @@ const CategoryList = () => {
                                                             <td>{category.categoryName || "No Name"}</td>
                                                             <td>{category.status === 1 ? "Published" : "Draft"}</td>
                                                             <td>{category.createdAt ? new Date(category.createdAt).toLocaleDateString() : "N/A"}</td>
-                                                            <td>
-                                                                <div className="d-flex action-buttons">
+                                                            <td><div className="d-flex action-buttons">
+                                                                {hasUpdatePermission('Mentorship Categories') && (
                                                                     <Link to={`/admin/edit-category/${category.id}`} className="me-2">
                                                                         <MdEdit fontSize={"18px"} />
                                                                     </Link>
+                                                                )}
+                                                                {hasDeletePermission('Mentorship Categories') && (
                                                                     <MdDelete
                                                                         onClick={() => handleDelete(category.id)}
                                                                         className="text-danger delete-icon"
                                                                     />
-                                                                </div>
+                                                                )}
+                                                            </div>
                                                             </td>
                                                         </tr>
                                                     ))

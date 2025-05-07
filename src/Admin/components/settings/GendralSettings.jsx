@@ -14,6 +14,9 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useParams } from 'react-router-dom';
 import Cookies from "js-cookie";
 import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
+import { useUser } from "../../../context/UserContext.js";
+import { monthsShort } from "moment";
+import Loader from "../Loader.js";
 
 const GendralSettings = ({ }) => {
   const { id } = useParams();
@@ -24,7 +27,11 @@ const GendralSettings = ({ }) => {
   const basicFormRef = useRef();
   const [logoPreview, setLogoPreview] = useState("");
   const [faviconPreview, setFaviconPreview] = useState("");
-  // const [imagePreview, setImagePreview] = useState(null);
+  const { rolePermissions } = useUser();
+  const [loading, setLoading] = useState(true);
+  const [Loading, setIsLoading] = useState(true);
+  
+  console.log("rolepermissions in the generalSettings:", rolePermissions);
 
   // 2. Function to manually trigger the first form submission
   const triggerBasicFormSubmit = () => {
@@ -35,8 +42,13 @@ const GendralSettings = ({ }) => {
   const [userData, setUserData] = useState([])
   // ... stateOptions and countryOptions code
   useEffect(() => {
-    const fetchSettingDetails = async () => {
+    const fetchSettingDetails = async () => { 
+      const timeoutId =  setTimeout(() => {
+        setLoading(false)
+      }, 2000);
+
       try {
+        setLoading(true);
         const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/getSetting`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -67,6 +79,10 @@ const GendralSettings = ({ }) => {
         }
       } catch (error) {
         console.error("Fetch error:", error);
+      } finally {
+        setIsLoading(false);
+        setLoading(false);
+        clearTimeout(timeoutId);
       }
     };
     fetchSettingDetails();
@@ -104,7 +120,6 @@ const GendralSettings = ({ }) => {
     }
   };
 
-
   const handleStateChange = (selectedOption) => {
     setSelectedState(selectedOption);
   };
@@ -132,14 +147,12 @@ const GendralSettings = ({ }) => {
       if (values.logo) {
         formData.append('logo', values.logo);
       }
-
       const response = await axiosSecure.post(`${API_BASE_URL}/api/admin/updateOrCreateSetting`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data" // Set the content type to multipart/form-data
         }
       });
-
       if (response.data.status === 200) {
         toast.success("Basic details updated successfully!", { position: "top-right" });
         setUserData((prev) => ({
@@ -168,7 +181,6 @@ const GendralSettings = ({ }) => {
         twitterLink: values.twitterLink,
         address: values.address
       };
-
       const response = await axiosSecure.post(
         `${API_BASE_URL}/api/admin/updateOrCreateSettingLinks`,
         payload,
@@ -198,7 +210,6 @@ const GendralSettings = ({ }) => {
       setSubmitting(false);
     }
   };
-
   console.log("userdata", userData)
 
   // /setting the logo image 
@@ -208,11 +219,22 @@ const GendralSettings = ({ }) => {
     }
   }, [userData?.logo]);
 
-  
+  //function to check the permissions 
+  const hasPermission = (moduleName, action) => {
+    console.log("moduleName in settings:", moduleName);
+    const permission = rolePermissions.find(permission => permission.moduleName === 'Settings')
+    console.log("permission for settings:", permission);
+    return permission ? permission[action] === 1 : false;
+  }
+
+  const hasCreatePermission = (moduleName) => hasPermission(moduleName, 'isAdd');
+  //  const hasReadPermission = (moduleName) => hasCreatePermission(moduleName, 'isRead');
+  const hasUpdatePermission = (moduleName) => hasPermission(moduleName, 'isUpdate');
 
 
   return (
     <>
+    {loading && <Loader />}
       <div >
         <SidebarNav />
         <div className="page-wrapper">
@@ -248,7 +270,7 @@ const GendralSettings = ({ }) => {
                         logo: userData.logo || "",
                         favicon: userData.favicon || "",
                       }}
-                      // validationSchema={basicDetails}
+                      validationSchema={basicDetails}
                       enableReinitialize={true}
                       onSubmit={handleSubmit}
                     >
@@ -337,17 +359,21 @@ const GendralSettings = ({ }) => {
                             {/* Logo */}
                             <div className="form-group">
                               <label>Logo</label>
-                              <Field name="logo" type="file">
-                                {({ field, form }) => (
+                              <Field name="logo">
+                                {({ form }) => (
                                   <div style={{ position: "relative", width: "100%" }}>
                                     <input
                                       type="file"
                                       id="logoUpload"
+                                      accept="image/*"
                                       style={{ display: "none" }}
-                                      onChange={(e) => handleLogoChange(e, setFieldValue)}
+                                      onChange={(e) => {
+                                        const file = e.currentTarget.files[0];
+                                        form.setFieldValue("logo", file); // Set the file
+                                        handleLogoChange(e, form.setFieldValue); // Optional: for preview
+                                      }}
                                     />
-                                    <label
-                                      htmlFor="logoUpload"
+                                    <label htmlFor="logoUpload"
                                       style={{
                                         height: "60px",
                                         border: "1px solid #ced4da",
@@ -356,9 +382,7 @@ const GendralSettings = ({ }) => {
                                         alignItems: "center",
                                         padding: "0 10px",
                                         cursor: "pointer",
-                                      }}
-                                    >
-                                      {/* Display logo preview or the logo from API */}
+                                      }}>
                                       {logoPreview || userData.logo ? (
                                         <img
                                           src={logoPreview || `${API_BASE_URL}/${userData.logo}`}
@@ -377,8 +401,10 @@ const GendralSettings = ({ }) => {
                                   </div>
                                 )}
                               </Field>
+                              <ErrorMessage name="logo" component="div" className="text-danger" />
                             </div>
 
+                            {/* Favicon */}
                             <div className="form-group">
                               <label>Favicon</label>
                               <Field name="favicon" type="file">
@@ -421,13 +447,16 @@ const GendralSettings = ({ }) => {
                                   </div>
                                 )}
                               </Field>
+                              <ErrorMessage name="favicon" component="div" className="text-danger"/>
                             </div>
 
                             <div className="form-group mb-0">
                               <div className="settings-btns">
-                                <button type="submit" className="btn btn-primary mx-2">
-                                  Update
-                                </button>
+                                {hasUpdatePermission('Settings') && (
+                                  <button type="submit" className="btn btn-primary mx-2">
+                                    Update
+                                  </button>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -453,47 +482,57 @@ const GendralSettings = ({ }) => {
                         Email: userData.Email || "",
                         address: userData.address || ""
                       }}
+                      validationSchema={addressSchema}
                       enableReinitialize={true}
                       onSubmit={handleLinkSubmit}
                     >
                       {({ handleSubmit }) => (
                         <form onSubmit={handleSubmit}>
                           <div className="settings-form">
-
                             <div className="form-group">
                               <label>Facebook Link *</label>
                               <Field type="text" name="facebookLink" className="form-control" placeholder="Enter Facebook Link" />
+                              <ErrorMessage name="facebookLink" component="div" className="text-danger" />
                             </div>
                             <div className="form-group">
                               <label>Instagram *</label>
                               <Field type="text" name="instagramLink" className="form-control" placeholder="Enter Facebook Link" />
+                              <ErrorMessage name="instagramLink" component="div" className="text-danger" />
                             </div>
                             <div className="form-group">
                               <label>LinkedIn *</label>
                               <Field type="text" name="linkedInLink" className="form-control" placeholder="Enter LinkedIn Link" />
+                              <ErrorMessage name="linkedInLink" component="div" className="text-danger" />
                             </div>
                             <div className="form-group">
                               <label>Twitter *</label>
                               <Field type="text" name="twitterLink" className="form-control" placeholder="Enter Twitter Link" />
+                              <ErrorMessage name="twitterLink" component="div" className="text-danger" />
                             </div>
                             <h5 className="title">Address & Contact Details</h5>
 
                             <div className="form-group">
                               <label>Address *</label>
                               <Field type="text" name="address" className="form-control" placeholder="Enter Address" />
+                              <ErrorMessage name="address" component="div" className="text-danger" />
                             </div>
+
                             <div className="form-group">
                               <label>Mobile No *</label>
                               <Field type="text" name="mobileNo" className="form-control" placeholder="Enter Mobile No" />
+                              <ErrorMessage name="mobileNo" component="div" className="text-danger" />
                             </div>
 
                             <div className="form-group">
                               <label>Email *</label>
                               <Field type="text" name="Email" className="form-control" placeholder="Enter Email" />
+                              <ErrorMessage name="Email" component="div" className="text-danger" />
                             </div>
 
                             <div className="form-group">
-                              <button type="submit" className="btn btn-primary">Update</button>
+                              {hasUpdatePermission('Settings') && (
+                                <button type="submit" className="btn btn-primary">Update</button>
+                              )}
                             </div>
                           </div>
                         </form>

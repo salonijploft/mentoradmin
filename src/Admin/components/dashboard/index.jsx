@@ -10,51 +10,64 @@ import { API_BASE_URL } from "../../../Helper/apicall";
 // import { userPermissions } from "../../components/context/PermissionContext";
 import Cookies from "js-cookie";
 import { axiosSecure, fetchCsrfToken } from "../../../utils/axiosSecureInstance";
-import { usePermissions } from "../context/PermissionsProvider";
-import { useUser } from "../context/UserContext";
+// import { usePermissions } from "../context/PermissionsProvider";
+import { useUser } from "../../../context/UserContext";
+import Loader from "../Loader";
 
 const Dashboard = () => {
   const [excelData, setExcelData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [permissions, setPermissions] = useState([]);
-  const { rolePermissions } = useUser();
-
-    useEffect(() => {
-      const fetchEarlyAccessData = async () => {
+  const { rolePermissions } = useUser ();
+  console.log("rolePermisssions in dashbord", rolePermissions );
+ 
+  useEffect(() => {
+    const fetchEarlyAccessData = async () => {
         const apiUrl = `${API_BASE_URL}/api/admin/getEarlyAccess`;
-        try {
-          const token = Cookies.get("token");
-          const response = await axiosSecure.get(apiUrl, {
-            headers: token ? { Authorization: `Bearer ${token}` } : {}
-          });
-          if (response.data.status === 200) {
-            const formattedData = response.data.data.map(item => ({
-              "Name": item?.name || "",
-              "Email": item?.email || "",
-              "User  Type": item?.userType || "",
-              "Date": item?.createdAt ? new Date(item.createdAt).toLocaleDateString() : ""
-            }));
-            setExcelData(formattedData);
-          } else {
-            console.error("API returned non-200 status:", response.data);
-          }
-        } catch (error) {
-          console.error("Error fetching early access data:", error);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-    fetchEarlyAccessData();
-  }, []);
+        setLoading(true);
 
+        const timeoutId = setTimeout(() => {
+          setLoading(false); // Stop loading after a minimum duration
+        }, 2000); // Set minimum loading time (e.g., 2 seconds)
   
-    const hasPermission = (moduleName, action) => {
+
+        try {
+            const token = Cookies.get("token");
+            const response = await axiosSecure.get(apiUrl, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {}
+            });
+            if (response.data.status === 200) {
+                const formattedData = response.data.data.map(item => ({
+                    "Name": item?.name || "",
+                    "Email": item?.email || "",
+                    "User Type": item?.userType || "",
+                    "Date": item?.createdAt ? new Date(item.createdAt).toLocaleDateString() : ""
+                }));
+                setExcelData(formattedData);
+            } else {
+                console.error("API returned non-200 status:", response.data);
+            }
+        } catch (error) {
+            console.error("Error fetching early access data:", error);
+        } finally {
+            setIsLoading(false);
+            clearTimeout(timeoutId);
+            setLoading(false);
+        }
+    };
+    fetchEarlyAccessData();
+}, []);
+
+  const hasPermission = (moduleName, action) => {
     const permission = rolePermissions.find(permission => permission.moduleName === moduleName);
+    console.log(`Checking permission for ${moduleName} - ${action}:`, permission); 
     return permission ? permission[action] === 1 : false; 
-  };
+};
 
   return (
     <>
+     {loading && <Loader />}
       <div className="main-wrapper">
         <SidebarNav />
         {/* Page Wrapper */}
@@ -72,6 +85,7 @@ const Dashboard = () => {
                   {isLoading ? (
                     <div>Loading data...</div>
                   ) : (
+                    hasPermission('Dashboard', 'isRead') && 
                     <ExportToExcel apiData={excelData} fileName="EarlyAccess" />
                   )}
                 </div>
@@ -102,7 +116,6 @@ const Dashboard = () => {
                 </Link>
               </div>
               )}
-
 
               {hasPermission('Dashboard', 'isRead') && (  
               <div className="col-xl-3 col-sm-6 col-12">
@@ -174,7 +187,7 @@ const Dashboard = () => {
                   </div>
                 </div>
                  )}
-                 {hasPermission('Dashboard', 'isRead')  && (
+                 {hasPermission('Dashboard',  'isRead')  && (
                 <div className="col-xl-3 col-sm-6 col-12">
                   <Link to={'/admin/transactions-list'}>
                     <div className="card">
@@ -198,6 +211,8 @@ const Dashboard = () => {
                   </Link>
                 </div>
                 )}
+
+                {hasPermission('Dashboard', 'isRead') && ( 
                 <div className="col-xl-3 col-sm-6 col-12">
                   <Link to='/admin/refund-requests'>
                     <div className="card">
@@ -220,7 +235,9 @@ const Dashboard = () => {
                     </div>
                   </Link>
                 </div>
-
+                 )}
+                 
+                {hasPermission('Dashboard', 'isRead' ) && (
                 <div className="col-xl-3 col-sm-6 col-12">
                   <div className="card">
                     <div className="card-body">
@@ -241,6 +258,9 @@ const Dashboard = () => {
                     </div>
                   </div>
                 </div>
+                )}
+
+                 {hasPermission('Dashboard', 'isRead') && (
                 <div className="col-xl-3 col-sm-6 col-12">
                   <Link to={'/admin/commissions'}>
                     <div className="card">
@@ -263,6 +283,9 @@ const Dashboard = () => {
                     </div>
                   </Link>
                 </div>
+                )}
+
+                 {hasPermission('Dashboard', 'isRead') && ( 
                 <div className="col-xl-3 col-sm-6 col-12">
                   <Link to={'/admin/wht-list?type=unremmited'}>
                     <div className="card">
@@ -285,6 +308,9 @@ const Dashboard = () => {
                     </div>
                   </Link>
                 </div>
+                 )}
+
+                {hasPermission('Dashboard',  'isRead') && ( 
                 <div className="col-xl-3 col-sm-6 col-12">
                   <Link to={'/admin/wht-list?type=remmited'}>
                     <div className="card">
@@ -307,6 +333,9 @@ const Dashboard = () => {
                     </div>
                   </Link>
                 </div>
+                )}
+
+                {hasPermission('Dashboard', 'isRead') && (  
                 <div className="col-xl-3 col-sm-6 col-12">
                   <Link to='/admin/vat-commission-list?type=unremmitted'>
                     <div className="card">
@@ -327,7 +356,9 @@ const Dashboard = () => {
                     </div>
                   </Link >
                 </div>
+                  )}
 
+                {hasPermission('Dashboard', 'isRead') && ( 
                 <div className="col-xl-3 col-sm-6 col-12">
                   <Link to='/admin/vat-commission-list?type=remmitted'>
                     <div className="card">
@@ -350,10 +381,11 @@ const Dashboard = () => {
                     </div>
                   </Link>
                 </div>
+                 )}
               </>
             </div>
             <div className="row">
-            {/* {hasPermission('Dashboard', 'isRead') && (  */}
+            {hasPermission('Dashboard', 'isRead') && ( 
               <div className="col-md-4 col-lg-6">
                 {/* Sales Chart */}
                 <div className="card card-chart">
@@ -367,6 +399,9 @@ const Dashboard = () => {
                 </div>
                 {/* /Sales Chart */}
               </div>
+              )}
+
+              {hasPermission('Dashboard',  'isRead') && (
               <div className="col-md-4 col-lg-6">
                 {/* Invoice Chart */}
                 <div className="card card-chart">
@@ -382,6 +417,7 @@ const Dashboard = () => {
                 </div>
                 {/* /Invoice Chart */}
               </div>
+              )}
             </div>
           </div>
         </div>

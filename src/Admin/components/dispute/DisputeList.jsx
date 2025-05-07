@@ -2,9 +2,13 @@ import React, { useState } from "react";
 import SidebarNav from "../sidebar";
 import Pagination from "../Pagination/Pagination";
 import DisputePopup from "./DisputePopup";
+import { useUser } from "../../../context/UserContext"
 
 const DisputeList = () => {
     const [show, setShowModal] = useState(false)
+    const { rolePermissions } = useUser();
+    console.log("rolePermissions for DisputeList:", rolePermissions);
+
 
     const disputes = [
         {
@@ -74,6 +78,18 @@ const DisputeList = () => {
         },
     ];
 
+    // Permission Check Function
+    const hasPermission = (moduleName, action) => {
+        const permission = rolePermissions.find(permission => permission.moduleName === 'Dispute Management');
+        console.log("moduleName for appointments:", moduleName);
+        console.log("permissions for Dispute Management Module:", permission);
+        return permission ? permission[action] === 1 : false;
+    };
+
+    const hasReadPermission = (moduleName) => hasPermission(moduleName, 'isRead');
+    const hasCreatePermission = (moduleName) => hasPermission(moduleName, 'isCreate');
+    const hasUpdatePermission = (moduleName) => hasPermission(moduleName, 'isUpdate');
+    const hasDeletePermission = (moduleName) => hasPermission(moduleName, 'isDelete');
 
 
     return (
@@ -129,7 +145,7 @@ const DisputeList = () => {
 
                                                         <td>{dispute.disputeReason}</td>
                                                         <td>
-
+                                                        { hasUpdatePermission ('Dispute Management') && ( 
                                                             <select
                                                                 className="form-select w-100 p-2"
                                                                 style={{
@@ -146,23 +162,27 @@ const DisputeList = () => {
                                                                 <option value="Resolved">Resolved</option>
                                                                 <option value="Rejected">Rejected</option>
                                                             </select>
+                                                            )}
                                                         </td>
                                                         <td>
                                                             {dispute.date} <br />
                                                             <small>{dispute.time}</small>
                                                         </td>
-                                                        <td>
-                                                            <div className="d-flex action-buttons">
+                                                        <td><div className="d-flex action-buttons">
+                                                            {hasUpdatePermission('Dispute Management') && (
+                                                                index === 0 ? (
+                                                                    <button className="btn btn-primary btn-sm">Refunded</button>
+                                                                ) : (
+                                                                    <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>
+                                                                        Refund
+                                                                    </button>
+                                                                )
+                                                            )}
 
-                                                                {index == 0 ?
-                                                                    <button className="btn btn-primary btn-sm" >Refunded</button>
-                                                                    :
-                                                                    <button className="btn btn-primary btn-sm" onClick={() => {
-                                                                        setShowModal(true)
-                                                                    }}>Refund</button>}
-
+                                                            {hasDeletePermission('Dispute Management') && (
                                                                 <button className="btn btn-danger btn-sm ms-2">Delete</button>
-                                                            </div>
+                                                            )}
+                                                        </div>
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -172,8 +192,6 @@ const DisputeList = () => {
                                 </div>
                             </div>
                             <div className="d-flex justify-content-end mt-3">
-
-
                                 <Pagination
                                     current={1}
                                     total={5}
@@ -188,8 +206,6 @@ const DisputeList = () => {
                 show={show}
                 handleClose={() => setShowModal(false)}
             />
-
-
         </>
     );
 };

@@ -20,16 +20,21 @@ const MenteeDetail = () => {
     const [error, setError] = useState(null);
     const [menteeData, setMenteeData] = useState(null);
     const { id } = useParams();
-    const token = Cookies.get('token');
+    // const token = Cookies.get("token")
 
     useEffect(() => {
         const fetchMenteeDetails = async () => {
             try {
-                const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/menteeDetail/${id}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
+                const response = await axiosSecure.get(`${API_BASE_URL}/api/admin/menteeDetail/${id}`,
+                    //  {
+                    // headers: {
+                    //     Authorization: `Bearer ${token}`,
+                    // },
+                //    }
+                {
+                    withCredentials: true,
+                }
+            );
                 setMenteeData(response.data.data);
                 console.log("setmenteeData:", response.data.data)
                 setLoading(false);
@@ -41,7 +46,6 @@ const MenteeDetail = () => {
         };
         if (id) fetchMenteeDetails();
     }, [id]);
-
     
     return (
         <>
